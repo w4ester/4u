@@ -4,6 +4,7 @@ import {
     ExampleTypeReference,
     ExampleTypeReferenceShape,
     ExampleTypeShape,
+    IntermediateRepresentation,
     Literal,
     MapType,
     ObjectTypeDeclaration,
@@ -19,17 +20,20 @@ import { TypeResolver } from "../resolvers/TypeResolver";
 
 
 export class ExampleGenerator {
-    private typeResolver: TypeResolver;
+    private ir: IntermediateRepresentation;
 
-    // TODO: These both probably aren't necessary.
+    // TODO: These probably aren't necessary.
+    private typeResolver: TypeResolver;
     private exampleResolver: ExampleResolver;
     private casingsGenerator: CasingsGenerator;
 
     constructor(
+        ir: IntermediateRepresentation,
         typeResolver: TypeResolver,
         exampleResolver: ExampleResolver,
         casingsGenerator: CasingsGenerator,
     ) {
+        this.ir = ir;
         this.typeResolver = typeResolver;
         this.casingsGenerator = casingsGenerator;
         this.exampleResolver = exampleResolver;
@@ -98,7 +102,7 @@ export class ExampleGenerator {
             case "container":
                 return this.generateExampleContainer(typeReference.container);
             case "named":
-                return null;
+                return this.generateExampleNamed(typeReference);
             case "primitive":
                 return this.generateExamplePrimitive(typeReference.primitive);
             case "unknown":
@@ -109,7 +113,7 @@ export class ExampleGenerator {
     }
 
     private generateExampleNamed(name: DeclaredTypeName): ExampleTypeReference {
-
+        return this.generateExampleType(this.resolveType(name));
     }
 
     private generateExampleContainer(containerType: ContainerType): ExampleTypeReference {
@@ -274,6 +278,14 @@ export class ExampleGenerator {
             jsonExample: {},
             shape: ExampleTypeReferenceShape.unknown({}),
         };
+    }
+
+    private resolveType(name: DeclaredTypeName): TypeDeclaration {
+        const typeDeclaration = this.ir.types[name.typeId];
+        if (typeDeclaration == null) {
+            throw new Error(`internal error: could not resolve type with id: ${name.typeId}`);
+        }
+        return typeDeclaration;
     }
 
     private newNamelessExampleType({

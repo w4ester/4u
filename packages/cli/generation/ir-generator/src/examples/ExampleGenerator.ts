@@ -1,10 +1,10 @@
 import { assertNever } from "@fern-api/core-utils";
 import {
-    AliasTypeDeclaration, EnumTypeDeclaration, ExamplePrimitive,
-    ExampleType,
+    AliasTypeDeclaration, ContainerType, EnumTypeDeclaration, ExampleContainer, ExamplePrimitive, ExampleType,
     ExampleTypeReference,
     ExampleTypeReferenceShape,
     ExampleTypeShape,
+    MapType,
     ObjectTypeDeclaration,
     PrimitiveType,
     TypeDeclaration,
@@ -89,7 +89,7 @@ export class ExampleGenerator {
     private generateExampleTypeReference(typeReference: TypeReference): ExampleTypeReference {
         switch (typeReference.type) {
             case "container":
-                return null;
+                return this.generateExampleContainer(typeReference.container);
             case "named":
                 return null;
             case "primitive":
@@ -99,6 +99,69 @@ export class ExampleGenerator {
             default:
                 assertNever(typeReference);
         }
+    }
+
+    private generateExampleContainer(containerType: ContainerType): ExampleTypeReference {
+        switch (containerType.type) {
+            case "list":
+                return this.generateExampleTypeReferenceList(containerType.list);
+            case "map":
+                return this.generateExampleTypeReferenceMap(containerType);
+            case "optional":
+                return this.generateExampleTypeReference(containerType.optional);
+            case "set":
+                return this.generateExampleTypeReferenceSet(containerType.set);
+            case "literal":
+            default:
+                assertNever(containerType);
+        }
+    }
+
+    private generateExampleTypeReferenceList(typeReference: TypeReference): ExampleTypeReference {
+        const exampleTypeReference = this.generateExampleTypeReference(typeReference);
+        return {
+            jsonExample: [exampleTypeReference.jsonExample],
+            shape: ExampleTypeReferenceShape.container(
+                ExampleContainer.list([exampleTypeReference]),
+            ),
+        };
+    }
+
+    private generateExampleTypeReferenceMap(mapType: MapType): ExampleTypeReference {
+        const exampleTypeReferenceKey = this.generateExampleTypeReference(mapType.keyType);
+        const exampleTypeReferenceValue = this.generateExampleTypeReference(mapType.valueType);
+        const jsonExampleMapKey = this.jsonExampleToMapKey(exampleTypeReferenceKey.jsonExample);
+        return {
+            jsonExample: {
+                [jsonExampleMapKey]: exampleTypeReferenceValue.jsonExample,
+            },
+            shape: ExampleTypeReferenceShape.container(
+                ExampleContainer.map([{
+                    key: exampleTypeReferenceKey,
+                    value: exampleTypeReferenceValue,
+                }]),
+            ),
+        };
+    }
+
+    private jsonExampleToMapKey(jsonExample: unknown): string | number {
+        if (typeof jsonExample === "number") {
+            return 42;
+        }
+        // By default, always use a string key. This should only ever
+        // happen for string values because maps are validated to either
+        // be strings or numbers earlier in the chain.
+        return "key";
+    }
+
+    private generateExampleTypeReferenceSet(typeReference: TypeReference): ExampleTypeReference {
+        const exampleTypeReference = this.generateExampleTypeReference(typeReference);
+        return {
+            jsonExample: [exampleTypeReference.jsonExample],
+            shape: ExampleTypeReferenceShape.container(
+                ExampleContainer.set([exampleTypeReference]),
+            ),
+        };
     }
 
     private generateExamplePrimitive(primitiveType: PrimitiveType): ExampleTypeReference {

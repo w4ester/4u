@@ -1,6 +1,6 @@
 import { assertNever } from "@fern-api/core-utils";
 import {
-    AliasTypeDeclaration, ContainerType, EnumTypeDeclaration, ExampleContainer, ExamplePrimitive, ExampleType,
+    AliasTypeDeclaration, ContainerType, DeclaredTypeName, EnumTypeDeclaration, ExampleContainer, ExamplePrimitive, ExampleType,
     ExampleTypeReference,
     ExampleTypeReferenceShape,
     ExampleTypeShape,
@@ -15,14 +15,22 @@ import {
 } from "@fern-fern/ir-sdk/api";
 import { CasingsGenerator } from "../casings/CasingsGenerator";
 import { ExampleResolver } from "../resolvers/ExampleResolver";
+import { TypeResolver } from "../resolvers/TypeResolver";
 
 
 export class ExampleGenerator {
-    // TODO: These both probably aren't necessary.
-    private casingsGenerator: CasingsGenerator;
-    private exampleResolver: ExampleResolver;
+    private typeResolver: TypeResolver;
 
-    constructor(casingsGenerator: CasingsGenerator, exampleResolver: ExampleResolver) {
+    // TODO: These both probably aren't necessary.
+    private exampleResolver: ExampleResolver;
+    private casingsGenerator: CasingsGenerator;
+
+    constructor(
+        typeResolver: TypeResolver,
+        exampleResolver: ExampleResolver,
+        casingsGenerator: CasingsGenerator,
+    ) {
+        this.typeResolver = typeResolver;
         this.casingsGenerator = casingsGenerator;
         this.exampleResolver = exampleResolver;
     }
@@ -98,6 +106,10 @@ export class ExampleGenerator {
             default:
                 assertNever(typeReference);
         }
+    }
+
+    private generateExampleNamed(name: DeclaredTypeName): ExampleTypeReference {
+
     }
 
     private generateExampleContainer(containerType: ContainerType): ExampleTypeReference {

@@ -1,8 +1,10 @@
 import { assertNever } from "@fern-api/core-utils";
 import {
     AliasTypeDeclaration, EnumTypeDeclaration, ExamplePrimitive,
-    ExampleType, ExampleTypeReference,
+    ExampleType,
+    ExampleTypeReference,
     ExampleTypeReferenceShape,
+    ExampleTypeShape,
     ObjectTypeDeclaration,
     PrimitiveType,
     TypeDeclaration,
@@ -10,8 +12,15 @@ import {
     UndiscriminatedUnionTypeDeclaration,
     UnionTypeDeclaration
 } from "@fern-fern/ir-sdk/api";
+import { CasingsGenerator } from "../casings/CasingsGenerator";
 
 export class ExampleGenerator {
+    private casingsGenerator: CasingsGenerator;
+
+    constructor(casingsGenerator: CasingsGenerator) {
+        this.casingsGenerator = casingsGenerator;
+    }
+
     public generateExampleType(typeDeclaration: TypeDeclaration): ExampleType | null {
         switch (typeDeclaration.shape.type) {
             case "alias":
@@ -34,7 +43,18 @@ export class ExampleGenerator {
     }
     
     private generateExampleTypeForEnum(enumDeclaration: EnumTypeDeclaration): ExampleType | null {
-        return null;
+        if (enumDeclaration.values.length === 0 || enumDeclaration.values[0] == null) {
+            return null;
+        }
+        const exampleEnumValue = enumDeclaration.values[0];
+        return this.newNamelessExampleType(
+            {
+                jsonExample: exampleEnumValue.name.wireValue,
+                shape: ExampleTypeShape.enum({
+                    value: exampleEnumValue.name,
+                }),
+            }            
+        );
     }
 
     private generateExampleTypeForObject(objectDeclaration: ObjectTypeDeclaration): ExampleType | null { 
@@ -49,7 +69,6 @@ export class ExampleGenerator {
         return null;
     }
 
-    // TODO: Remove null from return value.
     private generateExampleTypeReference(typeReference: TypeReference): ExampleTypeReference | null {
         switch (typeReference.type) {
             case "container":
@@ -124,15 +143,30 @@ export class ExampleGenerator {
                     )
                 }; 
             case "BASE_64":
-                // TODO(amckinney): Add support for base64 example primitives.
+                // TODO(amckinney): Add support for base64 example primitives; use a string for now.
                 return {
-                    jsonExample: "placeholder",
+                    jsonExample: "SGVsbG8gV29ybGQ=",
                     shape: ExampleTypeReferenceShape.primitive(
-                        ExamplePrimitive.integer(0),
+                        ExamplePrimitive.string({ original: "SGVsbG8gV29ybGQ=" }),
                     )
-                }; 
+                };
             default:
                 assertNever(primitiveType);
         }
+    }
+
+    private newNamelessExampleType({
+        jsonExample,
+        shape,
+    }: {
+        jsonExample: unknown;
+        shape: ExampleTypeShape;
+    }): ExampleType {
+        return {
+            name: undefined,
+            docs: undefined,
+            jsonExample,
+            shape,
+        };
     }
 }

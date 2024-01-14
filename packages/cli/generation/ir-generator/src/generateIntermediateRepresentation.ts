@@ -316,6 +316,8 @@ export async function generateIntermediateRepresentation({
         filteredIr
     );
 
+    // TODO: Generate the examples and insert them into a separate "generatedExample" field here.
+
     const isAuthMandatory =
         workspace.definition.rootApiFile.contents.auth != null &&
         Object.values(intermediateRepresentationForAudiences.services).every((service) => {

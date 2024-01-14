@@ -13,12 +13,17 @@ import {
     UnionTypeDeclaration
 } from "@fern-fern/ir-sdk/api";
 import { CasingsGenerator } from "../casings/CasingsGenerator";
+import { ExampleResolver } from "../resolvers/ExampleResolver";
+
 
 export class ExampleGenerator {
+    // TODO: These both probably aren't necessary.
     private casingsGenerator: CasingsGenerator;
+    private exampleResolver: ExampleResolver;
 
-    constructor(casingsGenerator: CasingsGenerator) {
+    constructor(casingsGenerator: CasingsGenerator, exampleResolver: ExampleResolver) {
         this.casingsGenerator = casingsGenerator;
+        this.exampleResolver = exampleResolver;
     }
 
     public generateExampleType(typeDeclaration: TypeDeclaration): ExampleType | null {
@@ -39,7 +44,17 @@ export class ExampleGenerator {
     }
 
     private generateExampleTypeForAlias(aliasDeclaration: AliasTypeDeclaration): ExampleType | null {
-        return null;
+        const exampleTypeReference = this.generateExampleTypeReference(aliasDeclaration.aliasOf);
+        return this.newNamelessExampleType(
+            {
+                jsonExample: exampleTypeReference.jsonExample,
+                shape: ExampleTypeShape.alias(
+                    {
+                        value: exampleTypeReference,
+                    }
+                ),
+            }
+        );
     }
     
     private generateExampleTypeForEnum(enumDeclaration: EnumTypeDeclaration): ExampleType | null {
@@ -69,7 +84,9 @@ export class ExampleGenerator {
         return null;
     }
 
-    private generateExampleTypeReference(typeReference: TypeReference): ExampleTypeReference | null {
+    // TODO: We need to create the JSON example structures from here. Refer to the ExampleResolver
+    // implementation to format objects and arrays.
+    private generateExampleTypeReference(typeReference: TypeReference): ExampleTypeReference {
         switch (typeReference.type) {
             case "container":
                 return null;
@@ -78,7 +95,7 @@ export class ExampleGenerator {
             case "primitive":
                 return this.generateExamplePrimitive(typeReference.primitive);
             case "unknown":
-                return null;
+                return this.generateExampleUnknown();
             default:
                 assertNever(typeReference);
         }
@@ -153,6 +170,13 @@ export class ExampleGenerator {
             default:
                 assertNever(primitiveType);
         }
+    }
+
+    private generateExampleUnknown(): ExampleTypeReference {
+        return {
+            jsonExample: {},
+            shape: ExampleTypeReferenceShape.unknown({}),
+        };
     }
 
     private newNamelessExampleType({

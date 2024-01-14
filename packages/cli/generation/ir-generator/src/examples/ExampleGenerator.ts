@@ -4,6 +4,7 @@ import {
     ExampleTypeReference,
     ExampleTypeReferenceShape,
     ExampleTypeShape,
+    Literal,
     MapType,
     ObjectTypeDeclaration,
     PrimitiveType,
@@ -84,8 +85,6 @@ export class ExampleGenerator {
         return null;
     }
 
-    // TODO: We need to create the JSON example structures from here. Refer to the ExampleResolver
-    // implementation to format objects and arrays.
     private generateExampleTypeReference(typeReference: TypeReference): ExampleTypeReference {
         switch (typeReference.type) {
             case "container":
@@ -112,6 +111,7 @@ export class ExampleGenerator {
             case "set":
                 return this.generateExampleTypeReferenceSet(containerType.set);
             case "literal":
+                return this.generateExampleTypeReferenceLiteral(containerType.literal);
             default:
                 assertNever(containerType);
         }
@@ -148,10 +148,10 @@ export class ExampleGenerator {
         if (typeof jsonExample === "number") {
             return 42;
         }
-        // By default, always use a string key. This should only ever
-        // happen for string values because maps are validated to either
-        // be strings or numbers earlier in the chain.
-        return "key";
+        // By default, always return a string key. This prevents unncessary
+        // error handling for non-number and non-string map keys which isn't
+        // even possible.
+        return "string";
     }
 
     private generateExampleTypeReferenceSet(typeReference: TypeReference): ExampleTypeReference {
@@ -162,6 +162,28 @@ export class ExampleGenerator {
                 ExampleContainer.set([exampleTypeReference]),
             ),
         };
+    }
+    
+    private generateExampleTypeReferenceLiteral(literal: Literal): ExampleTypeReference {
+        // TODO: Do we need to add support for example literals, or are primitives sufficient here?
+        switch (literal.type) {
+            case "boolean":
+                return {
+                    jsonExample: `${literal.boolean}`,
+                    shape: ExampleTypeReferenceShape.primitive(
+                        ExamplePrimitive.boolean(literal.boolean),
+                    ),
+                };
+            case "string":
+                return {
+                    jsonExample: `"${literal.string}"`,
+                    shape: ExampleTypeReferenceShape.primitive(
+                        ExamplePrimitive.string({ original: literal.string }),
+                    ),
+                };
+            default:
+                assertNever(literal);
+        }
     }
 
     private generateExamplePrimitive(primitiveType: PrimitiveType): ExampleTypeReference {
@@ -175,7 +197,7 @@ export class ExampleGenerator {
                 };
             case "INTEGER":
                 return {
-                    jsonExample: 0,
+                    jsonExample: 42,
                     shape: ExampleTypeReferenceShape.primitive(
                         ExamplePrimitive.integer(0),
                     )

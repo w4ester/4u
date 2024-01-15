@@ -1,7 +1,9 @@
 import { assertNever } from "@fern-api/core-utils";
 import { SchemaId } from "@fern-fern/openapi-ir-model/commons";
 import { FullExample, KeyValuePair, PrimitiveExample } from "@fern-fern/openapi-ir-model/example";
+import { DiscriminatedOneOfSchema } from "@fern-fern/openapi-ir-model/finalIr";
 import {
+    DiscriminatedOneOfSchemaWithExample,
     EnumSchemaWithExample,
     ObjectSchemaWithExample,
     PrimitiveSchemaValueWithExample,
@@ -73,8 +75,6 @@ export class ExampleTypeFactory {
                 }
                 return undefined;
             }
-            case "oneOf":
-                return undefined;
             case "unknown":
                 if (example != null) {
                     const fullExample = convertToFullExample(example);
@@ -151,8 +151,8 @@ export class ExampleTypeFactory {
                     getFullExampleAsObject(example) ??
                     (schema.fullExamples?.[0] != null ? getFullExampleAsObject(schema.fullExamples[0]) : {}) ??
                     {};
-                const allProperties = this.getAllProperties(schema);
-                const requiredProperties = this.getAllRequiredProperties(schema);
+                const allProperties = this.getAllPropertiesForObject(schema);
+                const requiredProperties = this.getAllRequiredPropertiesForObject(schema);
                 for (const [property, schema] of Object.entries(allProperties)) {
                     const required = property in requiredProperties;
                     if (required && fullExample[property] != null) {
@@ -183,12 +183,22 @@ export class ExampleTypeFactory {
                     properties: result
                 });
             }
+            case "oneOf": {
+                switch (schema.oneOf.type) {
+                    case "discriminated":
+                        return undefined;
+                    case "undisciminated":
+                        return undefined;
+                    default:
+                        return undefined;
+                }
+            }
             default:
                 assertNever(schema);
         }
     }
 
-    private getAllProperties(object: ObjectSchemaWithExample): Record<string, SchemaWithExample> {
+    private getAllPropertiesForObject(object: ObjectSchemaWithExample): Record<string, SchemaWithExample> {
         let properties: Record<string, SchemaWithExample> = {};
         for (const property of object.properties) {
             properties[property.key] = property.schema;
@@ -200,13 +210,13 @@ export class ExampleTypeFactory {
             }
             properties = {
                 ...properties,
-                ...this.getAllProperties(allOfSchema)
+                ...this.getAllPropertiesForObject(allOfSchema)
             };
         }
         return properties;
     }
 
-    private getAllRequiredProperties(object: ObjectSchemaWithExample): Record<string, SchemaWithExample> {
+    private getAllRequiredPropertiesForObject(object: ObjectSchemaWithExample): Record<string, SchemaWithExample> {
         let requiredProperties: Record<string, SchemaWithExample> = {};
         for (const property of object.properties) {
             const resolvedSchema = this.getResolvedSchema(property.schema);
@@ -221,10 +231,32 @@ export class ExampleTypeFactory {
             }
             requiredProperties = {
                 ...requiredProperties,
-                ...this.getAllRequiredProperties(allOfSchema)
+                ...this.getAllRequiredPropertiesForObject(allOfSchema)
             };
         }
         return requiredProperties;
+    }
+
+    private getAllPropertiesForDiscriminatedOneOf(
+        union: DiscriminatedOneOfSchemaWithExample
+    ): Record<string, SchemaWithExample> | undefined {
+        // no subtypes
+        if (union.schemas[0] == null) {
+            return undefined;
+        }
+
+        const properties: Record<string, SchemaWithExample> = {};
+        for (const property of union.commonProperties) {
+            properties[property.key] = property.schema;
+        }
+
+        const [discriminantValue, schema] = Object.entries(union.schemas)[0];
+
+        return properties;
+    }
+
+    private getAllRequiredPropertiesForDiscriminatedOneOf(union: DiscriminatedOneOfSchema): void {
+        const properties: Record<string, SchemaWithExample> = {};
     }
 
     private getResolvedSchema(schema: SchemaWithExample) {

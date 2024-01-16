@@ -1,0 +1,128 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`open api parser multiple parse open api 1`] = `
+{
+  "description": "One API",
+  "endpoints": [
+    {
+      "audiences": [],
+      "authed": false,
+      "availability": undefined,
+      "description": "List other examples.",
+      "errorStatusCode": [],
+      "examples": [
+        {
+          "headers": [],
+          "pathParameters": [],
+          "queryParameters": [],
+          "request": undefined,
+          "response": {
+            "array": [],
+            "type": "array",
+          },
+        },
+      ],
+      "generatedRequestName": "AnotherListRequest",
+      "headers": [],
+      "internal": undefined,
+      "method": "GET",
+      "operationId": "AnotherList",
+      "path": "/another",
+      "pathParameters": [],
+      "queryParameters": [],
+      "request": undefined,
+      "requestNameOverride": undefined,
+      "response": {
+        "description": "A list of other examples.",
+        "responseProperty": undefined,
+        "schema": {
+          "description": "The underlying array of other examples.",
+          "groupName": undefined,
+          "type": "array",
+          "value": {
+            "description": "Another example.",
+            "groupName": undefined,
+            "schema": {
+              "maxLength": undefined,
+              "minLength": undefined,
+              "type": "string",
+            },
+            "type": "primitive",
+          },
+        },
+        "type": "json",
+      },
+      "sdkName": undefined,
+      "server": [],
+      "summary": undefined,
+      "tags": [],
+    },
+    {
+      "audiences": [],
+      "authed": false,
+      "availability": undefined,
+      "description": "List examples.",
+      "errorStatusCode": [],
+      "examples": [
+        {
+          "headers": [],
+          "pathParameters": [],
+          "queryParameters": [],
+          "request": undefined,
+          "response": {
+            "array": [],
+            "type": "array",
+          },
+        },
+      ],
+      "generatedRequestName": "ExampleListRequest",
+      "headers": [],
+      "internal": undefined,
+      "method": "GET",
+      "operationId": "ExampleList",
+      "path": "/example",
+      "pathParameters": [],
+      "queryParameters": [],
+      "request": undefined,
+      "requestNameOverride": undefined,
+      "response": {
+        "description": "A list of examples.",
+        "responseProperty": undefined,
+        "schema": {
+          "description": "The underlying array of examples.",
+          "groupName": undefined,
+          "type": "array",
+          "value": {
+            "description": "An individual example.",
+            "groupName": undefined,
+            "schema": {
+              "maxLength": undefined,
+              "minLength": undefined,
+              "type": "string",
+            },
+            "type": "primitive",
+          },
+        },
+        "type": "json",
+      },
+      "sdkName": undefined,
+      "server": [],
+      "summary": undefined,
+      "tags": [],
+    },
+  ],
+  "errors": {},
+  "hasEndpointsMarkedInternal": false,
+  "nonRequestReferencedSchemas": [],
+  "schemas": {},
+  "securitySchemes": {},
+  "servers": [],
+  "tags": {
+    "orderedTagIds": undefined,
+    "tagsById": {},
+  },
+  "title": "one",
+  "variables": {},
+  "webhooks": [],
+}
+`;

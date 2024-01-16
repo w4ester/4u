@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: ignored
+  description: Ignored Description
+  version: 1.0.1
+  contact:
+    email: ignored@buildwithfern.com
+    name: Ignored Fern Team
+    url: https://www.buildwithfern.com/ignored
+paths:
+  /another:
+    get:
+      operationId: AnotherList
+      description: List other examples.
+      responses:
+        "200":
+          $ref: '#/components/responses/AnotherList'
+components:
+  responses:
+    AnotherList:
+      description: A list of other examples.
+      content:
+        application/json:
+          schema:
+            type: array
+            description: The underlying array of other examples.
+            items:
+              type: string
+              description: Another example.

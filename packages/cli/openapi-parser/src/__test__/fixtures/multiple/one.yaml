@@ -1,0 +1,32 @@
+openapi: 3.0.3
+info:
+  title: one
+  description: One API
+  version: 1.0.0
+  contact:
+    email: fernbot@buildwithfern.com
+    name: Fern Team
+    url: https://www.buildwithfern.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/license/mit/
+paths:
+  /example:
+    get:
+      operationId: ExampleList
+      description: List examples.
+      responses:
+        "200":
+          $ref: '#/components/responses/ExampleList'
+components:
+  responses:
+    ExampleList:
+      description: A list of examples.
+      content:
+        application/json:
+          schema:
+            type: array
+            description: The underlying array of examples.
+            items:
+              type: string
+              description: An individual example.

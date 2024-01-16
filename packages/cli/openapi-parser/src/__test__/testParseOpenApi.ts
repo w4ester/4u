@@ -6,14 +6,14 @@ import { parse } from "../parse";
 const FIXTURES_PATH = join(AbsoluteFilePath.of(__dirname), RelativeFilePath.of("fixtures"));
 
 // eslint-disable-next-line jest/no-export
-export function testParseOpenAPI(fixtureName: string, openApiFilename: string, asyncApiFilename?: string): void {
+export function testParseOpenAPI(fixtureName: string, openApiFilename?: string, asyncApiFilename?: string): void {
     // eslint-disable-next-line jest/valid-title
     describe(fixtureName, () => {
         it("parse open api", async () => {
             const absolutePathToOpenAPI = join(
                 FIXTURES_PATH,
                 RelativeFilePath.of(fixtureName),
-                RelativeFilePath.of(openApiFilename)
+                openApiFilename != null ? RelativeFilePath.of(openApiFilename) : RelativeFilePath.of("")
             );
             const absolutePathToAsyncAPI =
                 asyncApiFilename != null

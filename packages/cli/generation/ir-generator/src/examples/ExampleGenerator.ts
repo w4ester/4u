@@ -113,7 +113,20 @@ export class ExampleGenerator {
     }
 
     private generateExampleNamed(name: DeclaredTypeName): ExampleTypeReference {
-        return this.generateExampleType(this.resolveType(name));
+        const typeDeclaration = this.resolveType(name);
+        const exampleType = this.generateExampleType(typeDeclaration);
+        if (exampleType == null) {
+            throw new Error(`internal error: failed to generate example type with id: ${name.typeId}`);
+        }
+        return {
+            jsonExample: exampleType.jsonExample,
+            shape: ExampleTypeReferenceShape.named(
+                {
+                    typeName: name,
+                    shape: exampleType.shape,
+                },
+            ),
+        };
     }
 
     private generateExampleContainer(containerType: ContainerType): ExampleTypeReference {
@@ -164,9 +177,6 @@ export class ExampleGenerator {
         if (typeof jsonExample === "number") {
             return 42;
         }
-        // By default, always return a string key. This prevents unncessary
-        // error handling for non-number and non-string map keys which isn't
-        // even possible.
         return "string";
     }
 

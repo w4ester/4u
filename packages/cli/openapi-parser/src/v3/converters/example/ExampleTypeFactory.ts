@@ -3,6 +3,7 @@ import { SchemaId } from "@fern-fern/openapi-ir-model/commons";
 import { FullExample, KeyValuePair, PrimitiveExample } from "@fern-fern/openapi-ir-model/example";
 import {
     EnumSchemaWithExample,
+    NamedFullExample,
     ObjectSchemaWithExample,
     PrimitiveSchemaValueWithExample,
     SchemaWithExample
@@ -15,6 +16,32 @@ export class ExampleTypeFactory {
 
     constructor(schemas: Record<SchemaId, SchemaWithExample>) {
         this.schemas = schemas;
+    }
+
+    public buildMultipleExamples({
+        schema,
+        example,
+        isOptional = false,
+        /* If true, then we know that we are building an example for a query param, path param, or header */
+        parameter = false
+    }: {
+        schema: SchemaWithExample;
+        example: unknown | undefined;
+        isOptional: boolean;
+        parameter: boolean;
+    }): NamedFullExample | undefined {
+        if (schema.type === "object") {
+            
+            for (const fullExample of schema.fullExamples ?? []) {
+                this.buildExampleHelper({
+                    schema,
+                    isOptional,
+                    visitedSchemaIds: new Set(),
+                    example: fullExample,
+                    parameter
+                });
+            }
+        }
     }
 
     public buildExample({

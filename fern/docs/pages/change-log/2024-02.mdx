@@ -8,3 +8,35 @@ description: In February, 2024 Fern released On-Page Feedback.
 
 We've launched an on-page feedback feature enabling users to express their opinions with a 👍 or 👎, accompanied by a reason for their feedback. This empowers documentation authors to pinpoint underperforming pages and correct errors, such as malformed code examples. Authors receive instant notifications of new feedback through Slack, email, or RSS. 
 
+![On-Page Feedback](https://fern-image-hosting.s3.amazonaws.com/fern/on-page-feedback-example.mp4)
+
+![Slackbot notification](https://fern-image-hosting.s3.amazonaws.com/fern/on-page-feedback-slack.png)
+
+## Highlighting in CodeBlocks
+*February 10th, 2024* 
+
+We've launched the ability to highlight and focus lines of code within the CodeBlock component. 
+
+### Highlighting
+
+To highlight code, use the highLightLines prop and pass an array of arrays containing the start and end line numbers.
+
+```yaml
+<CodeBlock highlightLines={[[1, 3]]}>
+/* code */
+</CodeBlock>
+```
+
+![Highlighting in CodeBlocks](https://fern-image-hosting.s3.amazonaws.com/fern/codeblock+focus.png)
+
+### Highlighting with Focus
+
+To focus code, use the focus lines, add the highlightStyle prop and set it to "focus".
+
+```yaml
+<CodeBlock highlightLines={[[1, 3]]} highlightStyle="focus">
+/* code */
+</CodeBlock>
+``` 
+
+![Highlighting with Focus in CodeBlocks](https://fern-image-hosting.s3.amazonaws.com/fern/codeblock+focus.png)

@@ -23,6 +23,9 @@ tabs:
   api-reference:
     display-name: API Reference
     icon: "fa-solid fa-file-contract"
+  change-log:
+    display-name: Changelog
+    icon: "fa-solid fa-bolt"
 
 navigation:
   - tab: overview
@@ -74,10 +77,6 @@ navigation:
         contents:
           - page: Publishing to Maven Central
             path: ./docs/pages/guides/publish-to-maven-central.mdx
-      - section: Changelog
-        contents:
-          - page: December 2023
-            path: ./docs/pages/changelog/december-2023.mdx
   - tab: api-definition
     layout:
       - section: OpenAPI Specification
@@ -177,16 +176,6 @@ navigation:
             path: ./docs/pages/server-boilerplate/fastapi.mdx
           - page: Spring
             path: ./docs/pages/server-boilerplate/spring.mdx
-          - page: Go
-            path: ./docs/pages/server-boilerplate/go.mdx
-          - page: DotNet
-            path: ./docs/pages/server-boilerplate/dotnet.mdx
-          - page: Ruby on Rails
-            path: ./docs/pages/server-boilerplate/ruby-on-rails.mdx
-          - page: Flask
-            path: ./docs/pages/server-boilerplate/flask.mdx
-          - page: Django
-            path: ./docs/pages/server-boilerplate/django.mdx
   - tab: api-reference
     layout:
       - section: Overview
@@ -200,7 +189,16 @@ navigation:
         snippets:
           python: fern-api
           typescript: "@fern-api/node-sdk"
-
+  - tab: change-log
+    layout:
+      - section: "2024"
+        contents:
+          - page: February
+            path: ./docs/pages/change-log/2024-02.mdx
+            slug: 2024-02
+          - page: January
+            path: ./docs/pages/change-log/2024-01.mdx
+            slug: 2024-01
 navbar-links:
   - type: secondary
     text: Home

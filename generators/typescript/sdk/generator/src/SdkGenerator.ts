@@ -467,6 +467,33 @@ module.exports = {
         });
     }
 
+    private bla() {
+        this.forEachService((service, packageId) => {
+            for (const endpoint of service.endpoints) {
+                if (endpoint.requestBody?.type === "inlinedRequestBody") {
+
+                } else if (endpoint.sdkRequest?.shape.type === "wrapper") {
+                    this.withSourceFile({
+                        filepath: this.requestWrapperDeclarationReferencer.getExportedFilepath({
+                            packageId,
+                            endpoint
+                        }),
+                        run: ({ sourceFile, importsManager }) => {
+                            const context = this.generateSdkContext({ sourceFile, importsManager });
+                            context.requestWrapper
+                                .getGeneratedRequestWrapper(packageId, endpoint.name)
+                                .getNonBodyKeys
+                        }
+                    });
+                } else if (endpoint.requestBody?.type === "fileUpload") {
+
+                } else {
+
+                }
+            }
+        });
+    }
+
     private generateRequestWrappers() {
         this.forEachService((service, packageId) => {
             for (const endpoint of service.endpoints) {

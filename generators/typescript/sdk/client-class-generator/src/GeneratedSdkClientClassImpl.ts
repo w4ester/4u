@@ -280,6 +280,13 @@ export class GeneratedSdkClientClassImpl implements GeneratedSdkClientClass {
         });
     }
 
+    public getEndpoint(args: { context: SdkContext; endpointId: string }): GeneratedEndpointImplementation | undefined {
+        const generatedEndpoint = this.generatedEndpointImplementations.find((generatedEndpoint) => {
+            return generatedEndpoint.endpoint.id === args.endpointId;
+        });
+        return generatedEndpoint;
+    }
+
     public accessFromRootClient(args: { referenceToRootClient: ts.Expression }): ts.Expression {
         return [...this.package_.fernFilepath.allParts].reduce<ts.Expression>(
             (acc, part) => ts.factory.createPropertyAccessExpression(acc, part.camelCase.unsafeName),

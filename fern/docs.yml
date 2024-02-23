@@ -1,6 +1,7 @@
 instances:
-  - url: fern.docs.buildwithfern.com
-    custom-domain: docs.buildwithfern.com
+  # TODO: Change this to the preview link.
+  - url: fern.docs.dev.buildwithfern.com
+    # custom-domain: docs.buildwithfern.com
 
 title: Fern | Documentation
 

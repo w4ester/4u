@@ -29,3 +29,12 @@ groups:
           license: MIT
         config:
           client_class_name: Fern
+  go-sdk:
+    audiences:
+      - external
+    generators:
+      - name: fernapi/fern-go-sdk
+        version: 0.17.0-rc0
+        github:
+          repository: fern-api/github-app-test
+          license: MIT

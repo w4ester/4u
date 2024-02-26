@@ -201,7 +201,7 @@ navigation:
         snippets:
           python: fern-api
           typescript: "@fern-api/node-sdk"
-          go: github.com/fern-api/github-app-test
+          go: https://github.com/fern-api/github-app-test
 
 navbar-links:
   - type: secondary

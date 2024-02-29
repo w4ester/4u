@@ -117,6 +117,6 @@ module.exports = {
         "@blueprintjs/html-components": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "@typescript-eslint/no-empty-interface": "off",
-        "no-unused-disable": "off"
+        "eslint-comments/no-unused-disable": "off"
     }
 };

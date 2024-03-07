@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GeneratorApiSchema } from "./GeneratorApiSchema";
 import { GeneratorGroupSchema } from "./GeneratorGroupSchema";
 import { GeneratorsOpenAPISchema } from "./GeneratorsOpenAPISchema";
 import { WhitelabelConfigurationSchema } from "./WhitelabelConfigurationSchema";
@@ -14,7 +15,8 @@ export const GeneratorsConfigurationSchema = z.strictObject({
     [OPENAPI_OVERRIDES_LOCATION_KEY]: z.optional(z.string()).describe("Deprecated; use openapi.overrides instead."),
     [ASYNC_API_LOCATION_KEY]: z.optional(z.string()),
     whitelabel: z.optional(WhitelabelConfigurationSchema),
-    groups: z.optional(z.record(GeneratorGroupSchema))
+    groups: z.optional(z.record(GeneratorGroupSchema)),
+    api: z.optional(GeneratorApiSchema)
 });
 
 export type GeneratorsConfigurationSchema = z.infer<typeof GeneratorsConfigurationSchema>;

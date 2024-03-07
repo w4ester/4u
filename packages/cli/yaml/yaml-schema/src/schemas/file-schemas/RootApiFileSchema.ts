@@ -8,15 +8,20 @@ import { HttpPathParameterSchema } from "../HttpPathParameterSchema";
 import { PaginationSchema } from "../PaginationSchema";
 import { VariableDeclarationSchema } from "../VariableDeclarationSchema";
 
-export const RootApiFileSchema = z.strictObject({
+export const BaseApiFileSchema = z.strictObject({
+    auth: z.optional(ApiAuthSchema),
+    "auth-schemes": z.optional(z.record(AuthSchemeDeclarationSchema)),
+    "default-environment": z.optional(z.string().or(z.null())),
+    environments: z.optional(z.record(z.string(), EnvironmentSchema))
+});
+
+export type BaseApiFileSchema = z.infer<typeof BaseApiFileSchema>;
+
+export const RootApiFileSchema = BaseApiFileSchema.extend({
     name: z.string(), // TODO: should this be migrated to id?
     "display-name": z.optional(z.string()),
     imports: z.optional(z.record(z.string())),
-    auth: z.optional(ApiAuthSchema),
-    "auth-schemes": z.optional(z.record(AuthSchemeDeclarationSchema)),
     headers: z.optional(z.record(z.string(), HttpHeaderSchema)),
-    "default-environment": z.optional(z.string().or(z.null())),
-    environments: z.optional(z.record(z.string(), EnvironmentSchema)),
     "error-discrimination": z.optional(ErrorDiscriminationSchema),
     audiences: z.optional(z.array(z.string())),
     docs: z.optional(z.string()),

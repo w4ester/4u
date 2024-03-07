@@ -2,6 +2,7 @@ import { Audiences } from "@fern-api/config-management-commons";
 import { Values } from "@fern-api/core-utils";
 import { AbsoluteFilePath } from "@fern-api/fs-utils";
 import { FernFiddle } from "@fern-fern/fiddle-sdk";
+import { GeneratorApiConfigSchema } from "./schemas/GeneratorApiSchema";
 import { GeneratorsConfigurationSchema } from "./schemas/GeneratorsConfigurationSchema";
 
 export interface GeneratorsConfiguration {
@@ -14,6 +15,7 @@ export interface GeneratorsConfiguration {
     defaultGroup: string | undefined;
     groups: GeneratorGroup[];
     whitelabel: FernFiddle.WhitelabelConfig | undefined;
+    api: GeneratorApiConfigSchema | undefined;
 }
 
 export interface GeneratorGroup {

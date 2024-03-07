@@ -64,7 +64,8 @@ export async function convertGeneratorsConfiguration({
                 ? {
                       github: rawGeneratorsConfiguration.whitelabel.github
                   }
-                : undefined
+                : undefined,
+        api: rawGeneratorsConfiguration.api
     };
 }
 

@@ -12,6 +12,7 @@ export declare namespace LocalTaskHandler {
         absolutePathToTmpOutputDirectory: AbsoluteFilePath;
         absolutePathToTmpSnippetJSON: AbsoluteFilePath | undefined;
         absolutePathToLocalOutput: AbsoluteFilePath;
+        absolutePathToIr: AbsoluteFilePath;
     }
 }
 
@@ -20,17 +21,20 @@ export class LocalTaskHandler {
     private absolutePathToTmpOutputDirectory: AbsoluteFilePath;
     private absolutePathToTmpSnippetJSON: AbsoluteFilePath | undefined;
     private absolutePathToLocalOutput: AbsoluteFilePath;
+    private absolutePathToIr: AbsoluteFilePath;
 
     constructor({
         context,
         absolutePathToTmpOutputDirectory,
         absolutePathToTmpSnippetJSON,
-        absolutePathToLocalOutput
+        absolutePathToLocalOutput,
+        absolutePathToIr
     }: LocalTaskHandler.Init) {
         this.context = context;
         this.absolutePathToLocalOutput = absolutePathToLocalOutput;
         this.absolutePathToTmpOutputDirectory = absolutePathToTmpOutputDirectory;
         this.absolutePathToTmpSnippetJSON = absolutePathToTmpSnippetJSON;
+        this.absolutePathToIr = absolutePathToIr;
     }
 
     public async copyGeneratedFiles(): Promise<void> {
@@ -42,6 +46,7 @@ export class LocalTaskHandler {
         if (this.absolutePathToTmpSnippetJSON !== undefined) {
             await this.copySnippetJSON(this.absolutePathToTmpSnippetJSON);
         }
+        await this.copyIr();
     }
 
     private async isFernIgnorePresent(): Promise<boolean> {
@@ -49,6 +54,13 @@ export class LocalTaskHandler {
             join(this.absolutePathToLocalOutput, RelativeFilePath.of(FERNIGNORE_FILENAME))
         );
         return await doesPathExist(absolutePathToFernignore);
+    }
+
+    private async copyIr(): Promise<void> {
+        await cp(
+            this.absolutePathToIr,
+            AbsoluteFilePath.of(join(this.absolutePathToLocalOutput, RelativeFilePath.of("ir.json")))
+        );
     }
 
     private async copyGeneratedFilesWithFernIgnore(): Promise<void> {

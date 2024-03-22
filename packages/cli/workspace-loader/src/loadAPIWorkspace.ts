@@ -44,16 +44,37 @@ export async function loadAPIWorkspace({
     const absolutePathToAsyncAPIFolder = join(absolutePathToWorkspace, RelativeFilePath.of(ASYNCAPI_DIRECTORY));
     const asyncApiDirectoryExists = await doesPathExist(absolutePathToAsyncAPIFolder);
 
-    if (generatorsConfiguration?.api != null && generatorsConfiguration.api.definitions.length > 0) {
+    if (
+        generatorsConfiguration?.api != null &&
+        ((generatorsConfiguration.api.type === "singleNamespace" &&
+            generatorsConfiguration.api.definitions.length > 0) ||
+            (generatorsConfiguration.api.type === "multiNamespace" && generatorsConfiguration.api.definitions.size > 0))
+    ) {
         const specs: Spec[] = [];
-        for (const definition of generatorsConfiguration.api.definitions) {
-            specs.push({
-                absoluteFilepath: join(absolutePathToWorkspace, RelativeFilePath.of(definition.path)),
-                absoluteFilepathToOverrides:
-                    definition.overrides != null
-                        ? join(absolutePathToWorkspace, RelativeFilePath.of(definition.overrides))
-                        : undefined
-            });
+        if (generatorsConfiguration.api.type === "singleNamespace") {
+            for (const definition of generatorsConfiguration.api.definitions) {
+                specs.push({
+                    absoluteFilepath: join(absolutePathToWorkspace, RelativeFilePath.of(definition.path)),
+                    absoluteFilepathToOverrides:
+                        definition.overrides != null
+                            ? join(absolutePathToWorkspace, RelativeFilePath.of(definition.overrides))
+                            : undefined,
+                    namespace: undefined
+                });
+            }
+        } else {
+            for (const [namespace, definitions] of generatorsConfiguration.api.definitions.entries()) {
+                for (const definition of definitions) {
+                    specs.push({
+                        absoluteFilepath: join(absolutePathToWorkspace, RelativeFilePath.of(definition.path)),
+                        absoluteFilepathToOverrides:
+                            definition.overrides != null
+                                ? join(absolutePathToWorkspace, RelativeFilePath.of(definition.overrides))
+                                : undefined,
+                        namespace
+                    });
+                }
+            }
         }
         return {
             didSucceed: true,
@@ -81,13 +102,15 @@ export async function loadAPIWorkspace({
         if (absolutePathToOpenAPI != null) {
             specs.push({
                 absoluteFilepath: absolutePathToOpenAPI,
-                absoluteFilepathToOverrides: undefined
+                absoluteFilepathToOverrides: undefined,
+                namespace: undefined
             });
         }
         if (absolutePathToAsyncAPI != null) {
             specs.push({
                 absoluteFilepath: absolutePathToAsyncAPI,
-                absoluteFilepathToOverrides: undefined
+                absoluteFilepathToOverrides: undefined,
+                namespace: undefined
             });
         }
         return {

@@ -29,6 +29,7 @@ export interface OSSWorkspace {
 }
 
 export interface Spec {
+    namespace: string | undefined;
     absoluteFilepath: AbsoluteFilePath;
     absoluteFilepathToOverrides: AbsoluteFilePath | undefined;
 }

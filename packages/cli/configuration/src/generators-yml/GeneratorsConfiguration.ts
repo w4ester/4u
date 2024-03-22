@@ -18,8 +18,7 @@ export type APIDefinition = SingleNamespaceAPIDefinition | MultiNamespaceAPIDefi
 
 export interface MultiNamespaceAPIDefinition {
     type: "multiNamespace";
-    namespace: string;
-    definitions: APIDefinitionLocation[];
+    definitions: Map<string, APIDefinitionLocation[]>;
 }
 
 export interface SingleNamespaceAPIDefinition {

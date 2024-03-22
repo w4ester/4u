@@ -90,20 +90,33 @@ function parseSingleNamespaceAPIConfiguration(apiConfiguration: APIDefinitionSch
                 overrides: apiConfiguration.overrides
             });
         }
-    } else if (apiConfiguration != null) {
-        // For typing simplicity, just don't allow a namespace called path
-        if ("path" in apiConfiguration) {
-            throw new Error("Overrides must be a string");
-        }
-        for (const namespace in apiConfiguration) {
-            const singleNamespaceAPIConfiguration = apiConfiguration[namespace];
-            if (singleNamespaceAPIConfiguration != null) {
-                const definitions = parseSingleNamespaceAPIConfiguration(singleNamespaceAPIConfiguration);
-                apiDefinitions.push(...definitions.map((definition) => ({ ...definition, namespace })));
-            }
-        }
     }
     return apiDefinitions;
+}
+
+function parseNamespaceAPIConfiguration(apiConfiguration: APIDefinitionSchema): APIDefinition {
+    // For typing simplicity, just don't allow a namespace called "path"
+    if (Array.isArray(apiConfiguration) || typeof apiConfiguration !== "object" || "path" in apiConfiguration) {
+        if (
+            typeof apiConfiguration === "object" &&
+            "path" in apiConfiguration &&
+            "overrides" in apiConfiguration &&
+            typeof apiConfiguration.overrides !== "string"
+        ) {
+            throw new Error("Overrides must be a string");
+        }
+        return { type: "singleNamespace", definitions: parseSingleNamespaceAPIConfiguration(apiConfiguration) };
+    }
+
+    const namespacedDefinitions = new Map<string, APIDefinitionLocation[]>();
+    for (const namespace in apiConfiguration) {
+        const singleNamespaceAPIConfiguration = apiConfiguration[namespace];
+        if (singleNamespaceAPIConfiguration != null) {
+            const definitions = parseSingleNamespaceAPIConfiguration(singleNamespaceAPIConfiguration);
+            namespacedDefinitions.set(namespace, definitions);
+        }
+    }
+    return { type: "multiNamespace", definitions: namespacedDefinitions };
 }
 
 async function parseAPIConfiguration(
@@ -112,7 +125,7 @@ async function parseAPIConfiguration(
     const apiConfiguration = rawGeneratorsConfiguration.api;
     const apiDefinitions: APIDefinitionLocation[] = [];
     if (apiConfiguration != null) {
-        apiDefinitions.push(...parseSingleNamespaceAPIConfiguration(apiConfiguration));
+        return parseNamespaceAPIConfiguration(apiConfiguration);
     } else {
         const openapi = rawGeneratorsConfiguration[OPENAPI_LOCATION_KEY];
         const openapiOverrides = rawGeneratorsConfiguration[OPENAPI_OVERRIDES_LOCATION_KEY];

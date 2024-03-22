@@ -27,6 +27,7 @@ export const APIDefintionWithOverridesSchema = z.object({
     path: APIDefinitionPathSchema,
     overrides: z.optional(z.string()).describe("Path to the OpenAPI or AsyncAPI overrides")
 });
+// namespace: z.optional(z.string()).describe("The subpackage or namespace to nest this API under.")
 
 /**
  * @example
@@ -37,11 +38,31 @@ export const APIDefintionWithOverridesSchema = z.object({
  */
 export const APIDefinitionList = z.array(z.union([APIDefinitionPathSchema, APIDefintionWithOverridesSchema]));
 
-// TODO: Introduce merging configuration with namespaces
-export const APIDefinitionSchema = z.union([
+export const APIDefinitionSchemaInner = z.union([
     APIDefinitionPathSchema,
     APIDefintionWithOverridesSchema,
     APIDefinitionList
+]);
+
+/**
+ * @example
+ * api:
+ *  myPackage: openapi.yml
+ *  myOtherPackage:
+ *      - path: asyncapi.yml
+ *        overrides: overrides.yml
+ *      - path: openapi.yml
+ *  myThirdPackage:
+ *     path: openapi.yml
+ *     overrides: overrides.yml
+ */
+export const APIDefinitionNamespaced = z.record(z.string(), APIDefinitionSchemaInner);
+
+export const APIDefinitionSchema = z.union([
+    APIDefinitionPathSchema,
+    APIDefintionWithOverridesSchema,
+    APIDefinitionList,
+    APIDefinitionNamespaced
 ]);
 
 export const DEFAULT_GROUP_GENERATORS_CONFIG_KEY = "default-group";
@@ -64,3 +85,4 @@ export const GeneratorsConfigurationSchema = z.strictObject({
 });
 
 export type GeneratorsConfigurationSchema = z.infer<typeof GeneratorsConfigurationSchema>;
+export type APIDefinitionSchema = z.infer<typeof APIDefinitionSchema>;

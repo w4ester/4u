@@ -17,6 +17,7 @@ import { GeneratorInvocationSchema } from "./schemas/GeneratorInvocationSchema";
 import { GeneratorOutputSchema } from "./schemas/GeneratorOutputSchema";
 import { GeneratorPublishMetadataSchema } from "./schemas/GeneratorPublishMetadataSchema";
 import {
+    APIDefinitionSchema,
     ASYNC_API_LOCATION_KEY,
     GeneratorsConfigurationSchema,
     OPENAPI_LOCATION_KEY,
@@ -57,37 +58,61 @@ export async function convertGeneratorsConfiguration({
     };
 }
 
+function parseSingleNamespaceAPIConfiguration(apiConfiguration: APIDefinitionSchema): APIDefinitionLocation[] {
+    const apiDefinitions: APIDefinitionLocation[] = [];
+    if (typeof apiConfiguration === "string") {
+        apiDefinitions.push({
+            path: apiConfiguration,
+            overrides: undefined
+        });
+    } else if (Array.isArray(apiConfiguration)) {
+        for (const definition of apiConfiguration) {
+            if (typeof definition === "string") {
+                apiDefinitions.push({
+                    path: definition,
+                    overrides: undefined
+                });
+            } else {
+                apiDefinitions.push({
+                    path: definition.path,
+                    overrides: definition.overrides
+                });
+            }
+        }
+    } else if (apiConfiguration != null && "path" in apiConfiguration && typeof apiConfiguration.path === "string") {
+        if ("overrides" in apiConfiguration && typeof apiConfiguration.overrides !== "string") {
+            throw new Error("Overrides must be a string");
+        }
+        // For some reason typescript needs this redundant check.
+        if (typeof apiConfiguration.overrides === "string") {
+            apiDefinitions.push({
+                path: apiConfiguration.path,
+                overrides: apiConfiguration.overrides
+            });
+        }
+    } else if (apiConfiguration != null) {
+        // For typing simplicity, just don't allow a namespace called path
+        if ("path" in apiConfiguration) {
+            throw new Error("Overrides must be a string");
+        }
+        for (const namespace in apiConfiguration) {
+            const singleNamespaceAPIConfiguration = apiConfiguration[namespace];
+            if (singleNamespaceAPIConfiguration != null) {
+                const definitions = parseSingleNamespaceAPIConfiguration(singleNamespaceAPIConfiguration);
+                apiDefinitions.push(...definitions.map((definition) => ({ ...definition, namespace })));
+            }
+        }
+    }
+    return apiDefinitions;
+}
+
 async function parseAPIConfiguration(
     rawGeneratorsConfiguration: GeneratorsConfigurationSchema
 ): Promise<APIDefinition> {
     const apiConfiguration = rawGeneratorsConfiguration.api;
     const apiDefinitions: APIDefinitionLocation[] = [];
     if (apiConfiguration != null) {
-        if (typeof apiConfiguration === "string") {
-            apiDefinitions.push({
-                path: apiConfiguration,
-                overrides: undefined
-            });
-        } else if (Array.isArray(apiConfiguration)) {
-            for (const definition of apiConfiguration) {
-                if (typeof definition === "string") {
-                    apiDefinitions.push({
-                        path: definition,
-                        overrides: undefined
-                    });
-                } else {
-                    apiDefinitions.push({
-                        path: definition.path,
-                        overrides: definition.overrides
-                    });
-                }
-            }
-        } else {
-            apiDefinitions.push({
-                path: apiConfiguration.path,
-                overrides: apiConfiguration.overrides
-            });
-        }
+        apiDefinitions.push(...parseSingleNamespaceAPIConfiguration(apiConfiguration));
     } else {
         const openapi = rawGeneratorsConfiguration[OPENAPI_LOCATION_KEY];
         const openapiOverrides = rawGeneratorsConfiguration[OPENAPI_OVERRIDES_LOCATION_KEY];

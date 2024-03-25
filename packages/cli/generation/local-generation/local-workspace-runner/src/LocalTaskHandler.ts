@@ -1,6 +1,6 @@
+import { FERNIGNORE_FILENAME, SNIPPET_JSON_FILENAME } from "@fern-api/configuration";
 import { AbsoluteFilePath, doesPathExist, join, RelativeFilePath } from "@fern-api/fs-utils";
 import { loggingExeca } from "@fern-api/logging-execa";
-import { FERNIGNORE_FILENAME, SNIPPET_JSON_FILENAME } from "@fern-api/configuration";
 import { TaskContext } from "@fern-api/task-context";
 import decompress from "decompress";
 import { cp, readdir, readFile, rm, rmdir } from "fs/promises";
@@ -12,6 +12,7 @@ export declare namespace LocalTaskHandler {
         absolutePathToTmpOutputDirectory: AbsoluteFilePath;
         absolutePathToTmpSnippetJSON: AbsoluteFilePath | undefined;
         absolutePathToLocalOutput: AbsoluteFilePath;
+        absolutePathToDotMockDirectory: AbsoluteFilePath;
         absolutePathToIr: AbsoluteFilePath;
     }
 }
@@ -21,6 +22,7 @@ export class LocalTaskHandler {
     private absolutePathToTmpOutputDirectory: AbsoluteFilePath;
     private absolutePathToTmpSnippetJSON: AbsoluteFilePath | undefined;
     private absolutePathToLocalOutput: AbsoluteFilePath;
+    private absolutePathToDotMockDirectory: AbsoluteFilePath;
     private absolutePathToIr: AbsoluteFilePath;
 
     constructor({
@@ -28,10 +30,12 @@ export class LocalTaskHandler {
         absolutePathToTmpOutputDirectory,
         absolutePathToTmpSnippetJSON,
         absolutePathToLocalOutput,
+        absolutePathToDotMockDirectory,
         absolutePathToIr
     }: LocalTaskHandler.Init) {
         this.context = context;
         this.absolutePathToLocalOutput = absolutePathToLocalOutput;
+        this.absolutePathToDotMockDirectory = absolutePathToDotMockDirectory;
         this.absolutePathToTmpOutputDirectory = absolutePathToTmpOutputDirectory;
         this.absolutePathToTmpSnippetJSON = absolutePathToTmpSnippetJSON;
         this.absolutePathToIr = absolutePathToIr;
@@ -47,6 +51,7 @@ export class LocalTaskHandler {
             await this.copySnippetJSON(this.absolutePathToTmpSnippetJSON);
         }
         await this.copyIr();
+        await this.copyDotMockDirectory();
     }
 
     private async isFernIgnorePresent(): Promise<boolean> {
@@ -61,6 +66,12 @@ export class LocalTaskHandler {
             this.absolutePathToIr,
             AbsoluteFilePath.of(join(this.absolutePathToLocalOutput, RelativeFilePath.of("ir.json")))
         );
+    }
+
+    private async copyDotMockDirectory(): Promise<void> {
+        await cp(this.absolutePathToDotMockDirectory, AbsoluteFilePath.of(this.absolutePathToLocalOutput), {
+            recursive: true
+        });
     }
 
     private async copyGeneratedFilesWithFernIgnore(): Promise<void> {

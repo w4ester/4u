@@ -1,17 +1,10 @@
 import { AbsoluteFilePath, join, RelativeFilePath } from "@fern-api/fs-utils";
-import {
-    GeneratorNotificationService,
-    GeneratorExecParsing,
-    FernGeneratorExec,
-    parseGeneratorConfig
-} from "@fern-api/generator-commons";
+import { FernGeneratorExec, GeneratorNotificationService, parseGeneratorConfig } from "@fern-api/generator-commons";
 import { CONSOLE_LOGGER, createLogger, Logger, LogLevel } from "@fern-api/logger";
 import { IntermediateRepresentation } from "@fern-fern/ir-sdk/api";
 import { NpmPackage, PersistedTypescriptProject } from "@fern-typescript/commons";
 import { GeneratorContext } from "@fern-typescript/contexts";
 import { cp, rm } from "fs";
-import { readFile } from "fs/promises";
-import { parse } from "path";
 import { constructNpmPackage } from "./constructNpmPackage";
 import { loadIntermediateRepresentation } from "./loadIntermediateRepresentation";
 import { publishPackage } from "./publishPackage";
@@ -110,6 +103,10 @@ export abstract class AbstractGeneratorCli<CustomConfig> {
 
                     if (config.writeUnitTests) {
                         try {
+                            await typescriptProject.copyProjectAsZipTo({
+                                logger,
+                                destinationZip
+                            });
                             // Write .mock folder if present
                             await typescriptProject.writeArbitraryFiles(async (pathToProject) => {
                                 cp(
@@ -133,10 +130,6 @@ export abstract class AbstractGeneratorCli<CustomConfig> {
                                         );
                                     }
                                 });
-                            });
-                            await typescriptProject.copyProjectAsZipTo({
-                                logger,
-                                destinationZip
                             });
                         } catch {
                             generatorContext.logger.debug("Could not write .mock folder to project");

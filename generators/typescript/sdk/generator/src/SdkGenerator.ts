@@ -333,6 +333,7 @@ export class SdkGenerator {
 
         if (this.generateJestTests) {
             this.generateTestFiles();
+            this.jestTestGenerator.addExtras();
             this.extraScripts = {
                 ...this.extraScripts,
                 ...this.jestTestGenerator.scripts
@@ -539,18 +540,11 @@ export class SdkGenerator {
             }
 
             this.withSourceFile({
-                filepath: {
-                    directories: [],
-                    file: {
-                        nameOnDisk: this.jestTestGenerator.getTestFile(
-                            packageId.isRoot ? "" : packageId.subpackageId,
-                            service
-                        )
-                    }
-                },
+                filepath: this.jestTestGenerator.getTestFile(packageId.isRoot ? "" : packageId.subpackageId, service),
                 run: ({ sourceFile, importsManager }) => {
                     const context = this.generateSdkContext({ sourceFile, importsManager });
                     const file = this.jestTestGenerator.buildFile(
+                        packageId,
                         this.sdkClientClassDeclarationReferencer.getExportedName(packageId),
                         service,
                         context.sdkClientClass.getGeneratedSdkClientClass(packageId),

@@ -1,5 +1,11 @@
 import * as IR from "@fern-fern/ir-sdk/api";
-import { DependencyManager, DependencyType, getTextOfTsNode } from "@fern-typescript/commons";
+import {
+    DependencyManager,
+    DependencyType,
+    ExportedFilePath,
+    getTextOfTsNode,
+    PackageId
+} from "@fern-typescript/commons";
 import { GeneratedSdkClientClass, SdkContext } from "@fern-typescript/contexts";
 import { SdkClientClassGenerator } from "@fern-typescript/sdk-client-class-generator";
 import path from "path";
@@ -18,26 +24,65 @@ export class JestTestGenerator {
         const jestConfig = this.rootDirectory.createSourceFile(
             "jest.config.js",
             code`
-        /** @type {import('ts-jest').JestConfigWithTsJest} */
-        module.exports = {
-            preset: "ts-jest",
-            testEnvironment: "node",
-        };
-        `.toString()
+            /** @type {import('jest').Config} */
+            module.exports = {
+                preset: "ts-jest",
+                testEnvironment: "node",
+                globalSetup: "<rootDir>/tests/setup.js",
+                globalTeardown: "<rootDir>/tests/teardown.js",
+            };
+            `.toString({ dprintOptions: { indentWidth: 4 } })
         );
         jestConfig.saveSync();
+
+        const setupFile = this.rootDirectory.createSourceFile(
+            "tests/setup.js",
+            code`
+            const { setup: setupDevServer } = require("jest-dev-server");
+
+            const PORT = 56157;
+
+
+            module.exports = async function globalSetup() {
+                process.env.TESTS_BASE_URL = \`http://localhost:\${PORT}\`;
+
+                globalThis.servers = await setupDevServer({
+                    command: \`node config/start.js --port=\${PORT}\`,
+                    launchTimeout: 10_000,
+                    port: PORT,
+                });
+            };`.toString({ dprintOptions: { indentWidth: 4 } })
+        );
+        setupFile.saveSync();
+        const teardownFile = this.rootDirectory.createSourceFile(
+            "tests/teardown.js",
+            code`
+            const { teardown: teardownDevServer } = require("jest-dev-server");
+
+            module.exports = async function globalSetup() {
+                await teardownDevServer(globalThis.servers);
+            };`.toString({ dprintOptions: { indentWidth: 4 } })
+        );
+        teardownFile.saveSync();
     }
 
-    public getTestFile(serviceId: string, service: IR.HttpService): string {
-        const serviceName = service.name.fernFilepath.file?.pascalCase.unsafeName;
-        const filePath = path.join("tests", serviceId, `${serviceName}.test.ts`);
-        return filePath;
+    public getTestFile(serviceId: string, service: IR.HttpService): ExportedFilePath {
+        const serviceName = service.name.fernFilepath.file?.pascalCase.unsafeName ?? "main";
+        const filePath = path.join(serviceId, `${serviceName}.test.ts`);
+        return {
+            directories: [],
+            file: {
+                nameOnDisk: filePath
+            },
+            rootDir: "tests"
+        };
     }
 
     private addDependencies(): void {
         this.dependencyManager.addDependency("jest", "^29.7.0", { type: DependencyType.DEV });
         this.dependencyManager.addDependency("@types/jest", "^29.5.5", { type: DependencyType.DEV });
         this.dependencyManager.addDependency("ts-jest", "^29.1.1", { type: DependencyType.DEV });
+        this.dependencyManager.addDependency("jest-dev-server", "^10.0.0", { type: DependencyType.DEV });
     }
 
     public addExtras(): void {
@@ -52,6 +97,7 @@ export class JestTestGenerator {
     }
 
     public buildFile(
+        packageId: PackageId,
         serviceName: string,
         service: IR.HttpService,
         serviceGenerator: GeneratedSdkClientClass,
@@ -65,15 +111,20 @@ export class JestTestGenerator {
 
         const fallbackTest = code`
             test("constructor", () => {
-                expect(client).toBeInstanceOf(${serviceName});
+                expect(${getTextOfTsNode(
+                    serviceGenerator.accessFromRootClient({
+                        referenceToRootClient: ts.factory.createIdentifier("client")
+                    })
+                )}).toBeDefined();
             });
         `;
 
+        const importStatement = context.sdkClientClass.getReferenceToClientClass({ isRoot: true });
+
         return code`
-            import { ${serviceName} } from "../src/${serviceName}";
-            const client = new ${serviceName}({
-                token: process.env.ENV_TOKEN || "token",
-                baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
+            const client = new ${getTextOfTsNode(importStatement.getEntityName())}({
+                token: process.env.ENV_TOKEN,
+                environment: process.env.TESTS_BASE_URL || "test",
             })
 
             describe("${serviceName}", () => {
@@ -136,7 +187,7 @@ export class JestTestGenerator {
                 return code`undefined`;
             }
 
-            return body.shape._visit({
+            const visitShape: IR.ExampleTypeReferenceShape._Visitor<Code | unknown> = {
                 primitive: (value) => {
                     return value._visit({
                         integer: (value) => code`${value}`,
@@ -146,7 +197,7 @@ export class JestTestGenerator {
                         long: (value) => code`${value}`,
                         datetime: (value) => code`new Date(${value.toISOString()})`,
                         date: (value) => code`new Date(${value})`,
-                        uuid: (value) => code`${value}`,
+                        uuid: (value) => code`"${value}"`,
                         _other: (value) => code`${value}`
                     });
                 },
@@ -154,7 +205,26 @@ export class JestTestGenerator {
                     return body.jsonExample;
                 },
                 named: (value) => {
-                    return body.jsonExample;
+                    return value.shape._visit({
+                        alias: (value) => {
+                            return code`${value.value.shape._visit(visitShape)}`;
+                        },
+                        enum: (value) => {
+                            return code`${value.value.wireValue}`;
+                        },
+                        object: (value) => {
+                            return code`${body.jsonExample}`;
+                        },
+                        union: (value) => {
+                            return code`${body.jsonExample}`;
+                        },
+                        undiscriminatedUnion: (value) => {
+                            return code`${body.jsonExample}`;
+                        },
+                        _other: (value: { type: string }) => {
+                            return body.jsonExample;
+                        }
+                    });
                 },
                 unknown: (value) => {
                     return body.jsonExample;
@@ -162,7 +232,9 @@ export class JestTestGenerator {
                 _other: (value) => {
                     return body.jsonExample;
                 }
-            });
+            };
+
+            return body.shape._visit(visitShape);
         };
         return code`
             test("${endpoint.name.camelCase.unsafeName}", async () => {

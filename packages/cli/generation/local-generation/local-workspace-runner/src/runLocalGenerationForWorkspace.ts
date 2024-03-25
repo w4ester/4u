@@ -8,7 +8,7 @@ import {
 import { TaskContext } from "@fern-api/task-context";
 import { FernWorkspace } from "@fern-api/workspace-loader";
 import chalk from "chalk";
-import { writeFile } from "fs/promises";
+import { cp, mkdir, writeFile } from "fs/promises";
 import os from "os";
 import path from "path";
 import tmp, { DirectoryResult } from "tmp-promise";
@@ -185,6 +185,12 @@ async function writeFilesToDiskAndRunGenerator({
     const absolutePathToTmpOutputDirectory = AbsoluteFilePath.of(tmpOutputDirectory.path);
     context.logger.debug("Will write output to: " + absolutePathToTmpOutputDirectory);
 
+    const tmpDotMockDirectory = await tmp.dir({
+        tmpdir: workspaceTempDir.path
+    });
+    const absolutePathToDotMockDirectory = AbsoluteFilePath.of(tmpDotMockDirectory.path);
+    context.logger.debug("Will write .mock to: " + absolutePathToDotMockDirectory);
+
     const absolutePathToFernDefinition = workspace.definition.absoluteFilepath;
 
     let absolutePathToTmpSnippetJSON = undefined;
@@ -195,6 +201,14 @@ async function writeFilesToDiskAndRunGenerator({
         absolutePathToTmpSnippetJSON = AbsoluteFilePath.of(snippetJsonFile.path);
         context.logger.debug("Will write snippet.json to: " + absolutePathToTmpSnippetJSON);
     }
+
+    await writeDotMock(
+        writeUnitTests,
+        generatorInvocation,
+        absolutePathToDotMockDirectory,
+        absolutePathToFernDefinition,
+        absolutePathToFernConfig
+    );
 
     await runGenerator({
         absolutePathToOutput: absolutePathToTmpOutputDirectory,
@@ -217,6 +231,7 @@ async function writeFilesToDiskAndRunGenerator({
         absolutePathToLocalOutput,
         absolutePathToTmpOutputDirectory,
         absolutePathToTmpSnippetJSON,
+        absolutePathToDotMockDirectory,
         absolutePathToIr
     });
     await taskHandler.copyGeneratedFiles();
@@ -268,4 +283,32 @@ async function writeIrToFile({
     await writeFile(absolutePathToIr, JSON.stringify(migratedIntermediateRepresentation, undefined, 4));
     context.logger.debug(`Wrote IR to ${absolutePathToIr}`);
     return absolutePathToIr;
+}
+
+// Copy Fern definition to output directory
+async function writeDotMock(
+    writeUnitTests: boolean,
+    generatorInvocation: generatorsYml.GeneratorInvocation,
+    absolutePathToDotMockDirectory: AbsoluteFilePath,
+    absolutePathToFernDefinition: AbsoluteFilePath | undefined,
+    absolutePathToFernConfig: AbsoluteFilePath | undefined
+): Promise<void> {
+    if (writeUnitTests && (generatorInvocation.outputMode.type ?? "").startsWith("github")) {
+        if (absolutePathToFernDefinition != null) {
+            await cp(`${absolutePathToFernDefinition}`, `${absolutePathToDotMockDirectory}/.mock/definition`, {
+                recursive: true
+            });
+        }
+        if (absolutePathToFernConfig != null) {
+            // Copy Fern config
+            await cp(`${absolutePathToFernConfig}`, `${absolutePathToDotMockDirectory}/.mock`);
+        } else if (absolutePathToFernDefinition != null) {
+            // If for whatever reason we don't have the fern config, just write a dummy ones
+            await mkdir(`${absolutePathToDotMockDirectory}/.mock`, { recursive: true });
+            await writeFile(
+                `${absolutePathToDotMockDirectory}/.mock/fern.config.json`,
+                '{"organization": "fern-test", "version": "0.19.0"}'
+            );
+        }
+    }
 }

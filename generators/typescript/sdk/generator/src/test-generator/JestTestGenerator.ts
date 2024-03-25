@@ -14,23 +14,6 @@ export class JestTestGenerator {
         private sdkClientClassGenerator: SdkClientClassGenerator
     ) {}
 
-    // private generateServiceTest(
-    //     service: IR.HttpService,
-    //     serviceGenerator: GeneratedSdkClientClass,
-    //     context: SdkContext
-    // ): void {
-    //     Object.values(this.intermediateRepresentation.services).forEach((service) => {
-    //         const fileName = `${service.name.fernFilepath.file?.pascalCase.safeName}.test.ts`;
-    //         const serviceGenerator = this.sdkClientClassGenerator.generateService({
-    //             packageId: { isRoot: true },
-    //             serviceClassName: service.name.fernFilepath.file?.pascalCase.safeName ?? ""
-    //         });
-    //         const file = this.buildFile(this.intermediateRepresentation, service, serviceGenerator, context);
-    //         const sourceFile = this.rootDirectory.createSourceFile(`tests/${fileName}`, file.toString());
-    //         sourceFile.saveSync();
-    //     });
-    // }
-
     private addJestConfig(): void {
         const jestConfig = this.rootDirectory.createSourceFile(
             "jest.config.js",
@@ -74,6 +57,18 @@ export class JestTestGenerator {
         serviceGenerator: GeneratedSdkClientClass,
         context: SdkContext
     ): Code {
+        const tests = service.endpoints
+            .map((endpoint) => {
+                return this.buildTest(service, endpoint, serviceGenerator, context);
+            })
+            .filter(Boolean);
+
+        const fallbackTest = code`
+            test("constructor", () => {
+                expect(client).toBeInstanceOf(${serviceName});
+            });
+        `;
+
         return code`
             import { ${serviceName} } from "../src/${serviceName}";
             const client = new ${serviceName}({
@@ -82,9 +77,7 @@ export class JestTestGenerator {
             })
 
             describe("${serviceName}", () => {
-                ${service.endpoints.map((endpoint) =>
-                    this.buildTest(service, endpoint, serviceGenerator, context)?.toString()
-                )}
+                ${tests.length > 0 ? tests : fallbackTest}
             });
             `;
     }
@@ -126,10 +119,9 @@ export class JestTestGenerator {
                 isForSnippet: true,
                 isForComment: false
             },
-            clientReference: ts.factory.createIdentifier("Client")
+            clientReference: ts.factory.createIdentifier("client")
         });
 
-        console.log("generatedExample", generatedExample);
         if (!generatedExample) {
             return;
         }
@@ -139,15 +131,42 @@ export class JestTestGenerator {
         }
 
         const getExpectedResponse = () => {
-            if (example.response.body?.jsonExample) {
-                return example.response.body?.jsonExample;
+            const body = example.response.body;
+            if (!body) {
+                return code`undefined`;
             }
-            // TODO: handle toBeTrue, toBeFalse, toBeNull, toBeUndefined
-            return example.response.body?.jsonExample;
+
+            return body.shape._visit({
+                primitive: (value) => {
+                    return value._visit({
+                        integer: (value) => code`${value}`,
+                        double: (value) => code`${value}`,
+                        string: (value) => code`"${value.original}"`,
+                        boolean: (value) => code`${value}`,
+                        long: (value) => code`${value}`,
+                        datetime: (value) => code`new Date(${value.toISOString()})`,
+                        date: (value) => code`new Date(${value})`,
+                        uuid: (value) => code`${value}`,
+                        _other: (value) => code`${value}`
+                    });
+                },
+                container: (value) => {
+                    return body.jsonExample;
+                },
+                named: (value) => {
+                    return body.jsonExample;
+                },
+                unknown: (value) => {
+                    return body.jsonExample;
+                },
+                _other: (value) => {
+                    return body.jsonExample;
+                }
+            });
         };
         return code`
             test("${endpoint.name.camelCase.unsafeName}", async () => {
-                const request = ${getTextOfTsNode(generatedExample)};
+                const response = ${getTextOfTsNode(generatedExample)};
                 expect(response).toEqual(${getExpectedResponse()});
             });
           `;

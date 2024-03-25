@@ -450,7 +450,9 @@ import { Ec2 } from "../src/Ec2";
 const client = new Ec2({ token: process.env.ENV_TOKEN || "token", baseUrl: process.env.TESTS_BASE_URL || "baseUrl" });
 
 describe("Ec2", () => {
-  undefined;
+    test("constructor", () => {
+        expect(client).toBeInstanceOf(Ec2);
+    });
 });
 
 
@@ -463,7 +465,9 @@ import { S3 } from "../src/S3";
 const client = new S3({ token: process.env.ENV_TOKEN || "token", baseUrl: process.env.TESTS_BASE_URL || "baseUrl" });
 
 describe("S3", () => {
-  undefined;
+    test("constructor", () => {
+        expect(client).toBeInstanceOf(S3);
+    });
 });
 "
 `;

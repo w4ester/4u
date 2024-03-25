@@ -1678,11 +1678,13 @@ export declare namespace Data {
 import * as serializers from "../../../../..";
 import * as TestSdk from "../../../../../../api";
 import * as core from "../../../../../../core";
+import { Metadata } from "./Metadata";
+import { Tag } from "./Tag";
 
 export const EventInfo: core.serialization.Schema<serializers.commons.EventInfo.Raw, TestSdk.commons.EventInfo> = core.serialization.union("type", {
-        "metadata": core.serialization.lazyObject(async () => (await import("../../../../..")).commons.Metadata),
+        "metadata": Metadata,
         "tag": core.serialization.object({
-            "value": core.serialization.lazy(async () => (await import("../../../../..")).commons.Tag)
+            "value": Tag
         })
     }).transform<TestSdk.commons.EventInfo>({
         transform: value => value,
@@ -1692,13 +1694,13 @@ export const EventInfo: core.serialization.Schema<serializers.commons.EventInfo.
 export declare namespace EventInfo {
     type Raw = EventInfo.Metadata | EventInfo.Tag;
 
-    interface Metadata extends serializers.commons.Metadata.Raw {
+    interface Metadata extends Metadata.Raw {
         "type": "metadata";
     }
 
     interface Tag {
         "type": "tag";
-        "value": serializers.commons.Tag.Raw;
+        "value": Tag.Raw;
     }
 }
 
@@ -1901,11 +1903,14 @@ export declare namespace Actress {
 import * as serializers from "../../..";
 import * as TestSdk from "../../../../api";
 import * as core from "../../../../core";
+import { Actor } from "./Actor";
+import { Actress } from "./Actress";
+import { StuntDouble } from "./StuntDouble";
 
-export const CastMember: core.serialization.Schema<serializers.CastMember.Raw, TestSdk.CastMember> = core.serialization.undiscriminatedUnion([core.serialization.lazyObject(async () => (await import("../../..")).Actor), core.serialization.lazyObject(async () => (await import("../../..")).Actress), core.serialization.lazyObject(async () => (await import("../../..")).StuntDouble)]);
+export const CastMember: core.serialization.Schema<serializers.CastMember.Raw, TestSdk.CastMember> = core.serialization.undiscriminatedUnion([Actor, Actress, StuntDouble]);
 
 export declare namespace CastMember {
-    type Raw = serializers.Actor.Raw | serializers.Actress.Raw | serializers.StuntDouble.Raw;
+    type Raw = Actor.Raw | Actress.Raw | StuntDouble.Raw;
 }
 
 
@@ -1917,17 +1922,18 @@ export declare namespace CastMember {
 import * as serializers from "../../..";
 import * as TestSdk from "../../../../api";
 import * as core from "../../../../core";
+import { File_ } from "./File_";
 
 export const Directory: core.serialization.ObjectSchema<serializers.Directory.Raw, TestSdk.Directory> = core.serialization.object({
         "name": core.serialization.string(),
-        "files": core.serialization.list(core.serialization.lazyObject(async () => (await import("../../..")).File_)).optional(),
+        "files": core.serialization.list(File_).optional(),
         "directories": core.serialization.list(core.serialization.lazyObject(async () => (await import("../../..")).Directory)).optional()
     });
 
 export declare namespace Directory {
     interface Raw {
         "name": string;
-        "files"?: serializers.File_.Raw[] | null;
+        "files"?: File_.Raw[] | null;
         "directories"?: serializers.Directory.Raw[] | null;
     }
 }
@@ -1941,9 +1947,10 @@ export declare namespace Directory {
 import * as serializers from "../../..";
 import * as TestSdk from "../../../../api";
 import * as core from "../../../../core";
+import { ExceptionInfo } from "./ExceptionInfo";
 
 export const Exception: core.serialization.Schema<serializers.Exception.Raw, TestSdk.Exception> = core.serialization.union("type", {
-        "generic": core.serialization.lazyObject(async () => (await import("../../..")).ExceptionInfo),
+        "generic": ExceptionInfo,
         "timeout": core.serialization.object({})
     }).transform<TestSdk.Exception>({
         transform: value => value,
@@ -1953,7 +1960,7 @@ export const Exception: core.serialization.Schema<serializers.Exception.Raw, Tes
 export declare namespace Exception {
     type Raw = Exception.Generic | Exception.Timeout;
 
-    interface Generic extends serializers.ExceptionInfo.Raw {
+    interface Generic extends ExceptionInfo.Raw {
         "type": "generic";
     }
 
@@ -1995,13 +2002,14 @@ export declare namespace ExceptionInfo {
 import * as serializers from "../../..";
 import * as TestSdk from "../../../../api";
 import * as core from "../../../../core";
+import { Movie } from "./Movie";
 
 export const ExtendedMovie: core.serialization.ObjectSchema<serializers.ExtendedMovie.Raw, TestSdk.ExtendedMovie> = core.serialization.object({
         "cast": core.serialization.list(core.serialization.string())
-    }).extend(core.serialization.lazyObject(async () => (await import("../../..")).Movie));
+    }).extend(Movie);
 
 export declare namespace ExtendedMovie {
-    interface Raw extends serializers.Movie.Raw {
+    interface Raw extends Movie.Raw {
         "cast": string[];
     }
 }
@@ -2105,16 +2113,17 @@ export declare namespace Metadata {
 import * as serializers from "../../..";
 import * as TestSdk from "../../../../api";
 import * as core from "../../../../core";
+import { MigrationStatus } from "./MigrationStatus";
 
 export const Migration: core.serialization.ObjectSchema<serializers.Migration.Raw, TestSdk.Migration> = core.serialization.object({
         "name": core.serialization.string(),
-        "status": core.serialization.lazy(async () => (await import("../../..")).MigrationStatus)
+        "status": MigrationStatus
     });
 
 export declare namespace Migration {
     interface Raw {
         "name": string;
-        "status": serializers.MigrationStatus.Raw;
+        "status": MigrationStatus.Raw;
     }
 }
 
@@ -2167,28 +2176,30 @@ export declare namespace Moment {
 import * as serializers from "../../..";
 import * as TestSdk from "../../../../api";
 import * as core from "../../../../core";
+import { MovieId } from "./MovieId";
+import { Tag } from "../../commons/resources/types/types/Tag";
 
 export const Movie: core.serialization.ObjectSchema<serializers.Movie.Raw, TestSdk.Movie> = core.serialization.object({
-        "id": core.serialization.lazy(async () => (await import("../../..")).MovieId),
-        "prequel": core.serialization.lazy(async () => (await import("../../..")).MovieId).optional(),
+        "id": MovieId,
+        "prequel": MovieId.optional(),
         "title": core.serialization.string(),
         "from": core.serialization.string(),
         "rating": core.serialization.number(),
         "type": core.serialization.stringLiteral("movie"),
-        "tag": core.serialization.lazy(async () => (await import("../../..")).commons.Tag),
+        "tag": Tag,
         "book": core.serialization.string().optional(),
         "metadata": core.serialization.record(core.serialization.string(), core.serialization.unknown())
     });
 
 export declare namespace Movie {
     interface Raw {
-        "id": serializers.MovieId.Raw;
-        "prequel"?: serializers.MovieId.Raw | null;
+        "id": MovieId.Raw;
+        "prequel"?: MovieId.Raw | null;
         "title": string;
         "from": string;
         "rating": number;
         "type": "movie";
-        "tag": serializers.commons.Tag.Raw;
+        "tag": Tag.Raw;
         "book"?: string | null;
         "metadata": Record<string, unknown>;
     }
@@ -2360,20 +2371,20 @@ export declare namespace Tree {
 
 import { Service } from "../src/Service";
 const client = new Service({
-  token: process.env.ENV_TOKEN || "token",
-  baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
+    token: process.env.ENV_TOKEN || "token",
+    baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
 });
 
 describe("Service", () => {
-  test("getException", async () => {
-    const request = await Client.file.notification.service.getException("notification-hsy129x");
-    expect(response).toEqual({
-      "type": "generic",
-      "exceptionType": "Unavailable",
-      "exceptionMessage": "This component is unavailable!",
-      "exceptionStacktrace": "<logs>",
+    test("getException", async () => {
+        const response = await client.file.notification.service.getException("notification-hsy129x");
+        expect(response).toEqual({
+            "type": "generic",
+            "exceptionType": "Unavailable",
+            "exceptionMessage": "This component is unavailable!",
+            "exceptionStacktrace": "<logs>",
+        });
     });
-  });
 });
 
 
@@ -2384,12 +2395,14 @@ describe("Service", () => {
 
 import { Service } from "../src/Service";
 const client = new Service({
-  token: process.env.ENV_TOKEN || "token",
-  baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
+    token: process.env.ENV_TOKEN || "token",
+    baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
 });
 
 describe("Service", () => {
-  undefined;
+    test("constructor", () => {
+        expect(client).toBeInstanceOf(Service);
+    });
 });
 
 
@@ -2400,19 +2413,20 @@ describe("Service", () => {
 
 import { Service } from "../src/Service";
 const client = new Service({
-  token: process.env.ENV_TOKEN || "token",
-  baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
+    token: process.env.ENV_TOKEN || "token",
+    baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
 });
 
 describe("Service", () => {
-  test("check", async () => {
-    const request = await Client.health.service.check("id-2sdx82h");
-    expect(response).toEqual(undefined);
-  });
-  test("ping", async () => {
-    const request = await Client.health.service.ping();
-    expect(response).toEqual(true);
-  });
+    test("check", async () => {
+        const response = await client.health.service.check("id-2sdx82h");
+        expect(response).toEqual(undefined);
+    });
+
+    test("ping", async () => {
+        const response = await client.health.service.ping();
+        expect(response).toEqual(true);
+    });
 });
 
 
@@ -2423,54 +2437,56 @@ describe("Service", () => {
 
 import { Service } from "../src/Service";
 const client = new Service({
-  token: process.env.ENV_TOKEN || "token",
-  baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
+    token: process.env.ENV_TOKEN || "token",
+    baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
 });
 
 describe("Service", () => {
-  test("getMovie", async () => {
-    const request = await Client.service.getMovie("movie-c06a4ad7");
-    expect(response).toEqual({
-      "id": "movie-c06a4ad7",
-      "prequel": "movie-cv9b914f",
-      "title": "The Boy and the Heron",
-      "from": "Hayao Miyazaki",
-      "rating": 8,
-      "type": "movie",
-      "tag": "tag-wf9as23d",
-      "metadata": {
-        "actors": ["Christian Bale", "Florence Pugh", "Willem Dafoe"],
-        "releaseDate": "2023-12-08",
-        "ratings": { "rottenTomatoes": 97, "imdb": 7.6 },
-      },
+    test("getMovie", async () => {
+        const response = await client.service.getMovie("movie-c06a4ad7");
+        expect(response).toEqual({
+            "id": "movie-c06a4ad7",
+            "prequel": "movie-cv9b914f",
+            "title": "The Boy and the Heron",
+            "from": "Hayao Miyazaki",
+            "rating": 8,
+            "type": "movie",
+            "tag": "tag-wf9as23d",
+            "metadata": {
+                "actors": ["Christian Bale", "Florence Pugh", "Willem Dafoe"],
+                "releaseDate": "2023-12-08",
+                "ratings": { "rottenTomatoes": 97, "imdb": 7.6 },
+            },
+        });
     });
-  });
-  test("createMovie", async () => {
-    const request = await Client.service.createMovie({
-      id: "movie-c06a4ad7",
-      prequel: "movie-cv9b914f",
-      title: "The Boy and the Heron",
-      from: "Hayao Miyazaki",
-      rating: 8,
-      type: "movie",
-      tag: "tag-wf9as23d",
-      metadata: {
-        "actors": ["Christian Bale", "Florence Pugh", "Willem Dafoe"],
-        "releaseDate": "2023-12-08",
-        "ratings": { "rottenTomatoes": 97, "imdb": 7.6 },
-      },
+
+    test("createMovie", async () => {
+        const response = await client.service.createMovie({
+            id: "movie-c06a4ad7",
+            prequel: "movie-cv9b914f",
+            title: "The Boy and the Heron",
+            from: "Hayao Miyazaki",
+            rating: 8,
+            type: "movie",
+            tag: "tag-wf9as23d",
+            metadata: {
+                "actors": ["Christian Bale", "Florence Pugh", "Willem Dafoe"],
+                "releaseDate": "2023-12-08",
+                "ratings": { "rottenTomatoes": 97, "imdb": 7.6 },
+            },
+        });
+        expect(response).toEqual(movie - c06a4ad7);
     });
-    expect(response).toEqual(movie - c06a4ad7);
-  });
-  test("getMetadata", async () => {
-    const request = await Client.service.getMetadata({ xApiVersion: "0.0.1", shallow: false, tag: "development" });
-    expect(response).toEqual({
-      "type": "html",
-      "extra": { "version": "0.0.1", "tenancy": "test" },
-      "tags": ["development", "public"],
-      "value": "<head>...</head>",
+
+    test("getMetadata", async () => {
+        const response = await client.service.getMetadata({ xApiVersion: "0.0.1", shallow: false, tag: "development" });
+        expect(response).toEqual({
+            "type": "html",
+            "extra": { "version": "0.0.1", "tenancy": "test" },
+            "tags": ["development", "public"],
+            "value": "<head>...</head>",
+        });
     });
-  });
 });
 
 
@@ -2479,22 +2495,17 @@ describe("Service", () => {
  * This file was auto-generated by Fern from our API Definition.
  */
 
+import { TestSdkClient } from "../src/TestSdkClient";
+const client = new TestSdkClient({
+    token: process.env.ENV_TOKEN || "token",
+    baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
+});
 
-
-            import { TestSdkClient } from "../src/TestSdkClient";
-            const client = new TestSdkClient({
-                token: process.env.ENV_TOKEN || "token",
-                baseUrl: process.env.TESTS_BASE_URL || "baseUrl",
-            })
-
-            describe("TestSdkClient", () => {
-                
-
-            test("echo", async () => {
-                const request = await Client.echo("Hello world!\\\\n\\\\nwith\\\\n\\\\tnewlines");
-                expect(response).toEqual(Hello world!\\n\\nwith\\n\\tnewlines);
-            });
-          
-            });
-            "
+describe("TestSdkClient", () => {
+    test("echo", async () => {
+        const response = await client.echo("Hello world!\\\\n\\\\nwith\\\\n\\\\tnewlines");
+        expect(response).toEqual("Hello world!\\n\\nwith\\n\\tnewlines");
+    });
+});
+"
 `;

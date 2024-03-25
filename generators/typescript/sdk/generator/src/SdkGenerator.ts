@@ -556,7 +556,7 @@ export class SdkGenerator {
                         context.sdkClientClass.getGeneratedSdkClientClass(packageId),
                         context
                     );
-                    sourceFile.replaceWithText(file.toString());
+                    sourceFile.replaceWithText(file.toString({ dprintOptions: { indentWidth: 4 } }));
                 }
             });
         });

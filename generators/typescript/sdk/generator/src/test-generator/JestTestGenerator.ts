@@ -77,7 +77,7 @@ export class JestTestGenerator {
         this.dependencyManager.addDependency("jest", "^29.7.0", { type: DependencyType.DEV });
         this.dependencyManager.addDependency("@types/jest", "^29.5.5", { type: DependencyType.DEV });
         this.dependencyManager.addDependency("ts-jest", "^29.1.1", { type: DependencyType.DEV });
-        this.dependencyManager.addDependency("jest-dev-server", "^10.0.0", { type: DependencyType.DEV });
+        // this.dependencyManager.addDependency("jest-dev-server", "^10.0.0", { type: DependencyType.DEV });
     }
 
     public addExtras(): void {

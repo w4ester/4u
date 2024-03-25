@@ -1,7 +1,6 @@
 import { generatorsYml } from "@fern-api/configuration";
 import { runDocker } from "@fern-api/docker-utils";
 import { AbsoluteFilePath, waitUntilPathExists } from "@fern-api/fs-utils";
-import { TaskContext } from "@fern-api/task-context";
 import * as FernGeneratorExecParsing from "@fern-fern/generator-exec-sdk/serialization";
 import { writeFile } from "fs/promises";
 import { DOCKER_CODEGEN_OUTPUT_DIRECTORY, DOCKER_GENERATOR_CONFIG_PATH, DOCKER_PATH_TO_IR } from "./constants";
@@ -13,14 +12,11 @@ export declare namespace runGenerator {
         organization: string;
         outputVersion?: string | undefined;
 
-        absolutePathToIr: AbsoluteFilePath;
+        absolutePathToIr: AbsoluteFilePath | undefined;
         absolutePathToOutput: AbsoluteFilePath;
-        absolutePathToFernConfig: AbsoluteFilePath | undefined;
-        absolutePathToFernDefinition: AbsoluteFilePath | undefined;
         absolutePathToSnippet: AbsoluteFilePath | undefined;
         absolutePathToWriteConfigJson: AbsoluteFilePath;
         keepDocker: boolean;
-        context: TaskContext;
         generatorInvocation: generatorsYml.GeneratorInvocation;
         writeUnitTests: boolean;
     }
@@ -31,14 +27,11 @@ export async function runGenerator({
     organization,
     outputVersion,
     absolutePathToOutput,
-    absolutePathToFernDefinition,
-    absolutePathToFernConfig,
     absolutePathToSnippet,
     absolutePathToIr,
     absolutePathToWriteConfigJson,
     keepDocker,
     generatorInvocation,
-    context,
     writeUnitTests
 }: runGenerator.Args): Promise<void> {
     const { name, version, config: customConfig } = generatorInvocation;

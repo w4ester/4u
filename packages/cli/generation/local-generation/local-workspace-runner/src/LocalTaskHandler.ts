@@ -13,7 +13,7 @@ export declare namespace LocalTaskHandler {
         absolutePathToTmpSnippetJSON: AbsoluteFilePath | undefined;
         absolutePathToLocalOutput: AbsoluteFilePath;
         absolutePathToDotMockDirectory: AbsoluteFilePath;
-        absolutePathToIr: AbsoluteFilePath;
+        absolutePathToIr: AbsoluteFilePath | undefined;
     }
 }
 
@@ -23,7 +23,7 @@ export class LocalTaskHandler {
     private absolutePathToTmpSnippetJSON: AbsoluteFilePath | undefined;
     private absolutePathToLocalOutput: AbsoluteFilePath;
     private absolutePathToDotMockDirectory: AbsoluteFilePath;
-    private absolutePathToIr: AbsoluteFilePath;
+    private absolutePathToIr: AbsoluteFilePath | undefined;
 
     constructor({
         context,
@@ -62,9 +62,12 @@ export class LocalTaskHandler {
     }
 
     private async copyIr(): Promise<void> {
+        if (this.absolutePathToIr === undefined) {
+            return;
+        }
         await cp(
             this.absolutePathToIr,
-            AbsoluteFilePath.of(join(this.absolutePathToLocalOutput, RelativeFilePath.of("ir.json")))
+            AbsoluteFilePath.of(join(this.absolutePathToLocalOutput, RelativeFilePath.of(".config/ir.json")))
         );
     }
 

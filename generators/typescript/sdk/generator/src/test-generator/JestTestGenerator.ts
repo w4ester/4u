@@ -7,18 +7,12 @@ import {
     PackageId
 } from "@fern-typescript/commons";
 import { GeneratedSdkClientClass, SdkContext } from "@fern-typescript/contexts";
-import { SdkClientClassGenerator } from "@fern-typescript/sdk-client-class-generator";
 import path from "path";
 import { Directory, ts } from "ts-morph";
 import { code, Code } from "ts-poet";
 
 export class JestTestGenerator {
-    constructor(
-        private intermediateRepresentation: IR.IntermediateRepresentation,
-        private dependencyManager: DependencyManager,
-        private rootDirectory: Directory,
-        private sdkClientClassGenerator: SdkClientClassGenerator
-    ) {}
+    constructor(private dependencyManager: DependencyManager, private rootDirectory: Directory) {}
 
     private addJestConfig(): void {
         const jestConfig = this.rootDirectory.createSourceFile(
@@ -28,47 +22,48 @@ export class JestTestGenerator {
             module.exports = {
                 preset: "ts-jest",
                 testEnvironment: "node",
-                globalSetup: "<rootDir>/tests/setup.js",
-                globalTeardown: "<rootDir>/tests/teardown.js",
             };
             `.toString({ dprintOptions: { indentWidth: 4 } })
+            // globalSetup: "<rootDir>/tests/setup.js",
+            // globalTeardown: "<rootDir>/tests/teardown.js",
         );
         jestConfig.saveSync();
 
-        const setupFile = this.rootDirectory.createSourceFile(
-            "tests/setup.js",
-            code`
-            const { setup: setupDevServer } = require("jest-dev-server");
+        // const setupFile = this.rootDirectory.createSourceFile(
+        //     "tests/setup.js",
+        //     code`
+        //     const { setup: setupDevServer } = require("jest-dev-server");
 
-            const PORT = 56157;
+        //     const PORT = 56157;
 
+        //     module.exports = async function globalSetup() {
+        //         process.env.TESTS_BASE_URL = \`http://localhost:\${PORT}\`;
 
-            module.exports = async function globalSetup() {
-                process.env.TESTS_BASE_URL = \`http://localhost:\${PORT}\`;
+        //         globalThis.servers = await setupDevServer({
+        //             command: \`fern mock --port=\${PORT}\`,
+        //             launchTimeout: 10_000,
+        //             port: PORT,
+        //         });
+        //     };`.toString({ dprintOptions: { indentWidth: 4 } })
+        // );
+        // setupFile.saveSync();
+        // const teardownFile = this.rootDirectory.createSourceFile(
+        //     "tests/teardown.js",
+        //     code`
+        //     const { teardown: teardownDevServer } = require("jest-dev-server");
 
-                globalThis.servers = await setupDevServer({
-                    command: \`node config/start.js --port=\${PORT}\`,
-                    launchTimeout: 10_000,
-                    port: PORT,
-                });
-            };`.toString({ dprintOptions: { indentWidth: 4 } })
-        );
-        setupFile.saveSync();
-        const teardownFile = this.rootDirectory.createSourceFile(
-            "tests/teardown.js",
-            code`
-            const { teardown: teardownDevServer } = require("jest-dev-server");
-
-            module.exports = async function globalSetup() {
-                await teardownDevServer(globalThis.servers);
-            };`.toString({ dprintOptions: { indentWidth: 4 } })
-        );
-        teardownFile.saveSync();
+        //     module.exports = async function globalSetup() {
+        //         await teardownDevServer(globalThis.servers);
+        //     };`.toString({ dprintOptions: { indentWidth: 4 } })
+        // );
+        // teardownFile.saveSync();
     }
 
     public getTestFile(serviceId: string, service: IR.HttpService): ExportedFilePath {
-        const serviceName = service.name.fernFilepath.file?.pascalCase.unsafeName ?? "main";
-        const filePath = path.join(serviceId, `${serviceName}.test.ts`);
+        const folders = service.name.fernFilepath.packagePath.map((folder) => folder.originalName);
+        const filename = `${service.name.fernFilepath.file?.camelCase.unsafeName ?? "main"}.test.ts`;
+
+        const filePath = path.join(...folders, filename);
         return {
             directories: [],
             file: {
@@ -92,7 +87,7 @@ export class JestTestGenerator {
 
     public get scripts(): Record<string, string> {
         return {
-            test: "jest"
+            test: "fern test --command='jest'"
         };
     }
 

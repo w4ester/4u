@@ -52,6 +52,7 @@ export async function runLocalGenerationForWorkspace({
                         context: interactiveTaskContext,
                         irVersionOverride: generatorInvocation.irVersionOverride,
                         outputVersionOverride: undefined,
+                        writeIr: false,
                         writeSnippets: false,
                         writeUnitTests: false
                     });
@@ -109,6 +110,7 @@ export async function runLocalGenerationForSeed({
                         context: interactiveTaskContext,
                         irVersionOverride,
                         outputVersionOverride,
+                        writeIr: true,
                         writeSnippets: true,
                         writeUnitTests: true
                     });
@@ -147,6 +149,7 @@ async function writeFilesToDiskAndRunGenerator({
     irVersionOverride,
     outputVersionOverride,
     writeSnippets,
+    writeIr,
     writeUnitTests
 }: {
     organization: string;
@@ -160,18 +163,22 @@ async function writeFilesToDiskAndRunGenerator({
     context: TaskContext;
     irVersionOverride: string | undefined;
     outputVersionOverride: string | undefined;
+    writeIr: boolean;
     writeSnippets: boolean;
     writeUnitTests: boolean;
 }): Promise<void> {
-    const absolutePathToIr = await writeIrToFile({
-        workspace,
-        audiences,
-        generatorInvocation,
-        workspaceTempDir,
-        context,
-        irVersionOverride
-    });
-    context.logger.debug("Wrote IR to: " + absolutePathToIr);
+    let absolutePathToIr: AbsoluteFilePath | undefined;
+    if (writeIr) {
+        absolutePathToIr = await writeIrToFile({
+            workspace,
+            audiences,
+            generatorInvocation,
+            workspaceTempDir,
+            context,
+            irVersionOverride
+        });
+        context.logger.debug("Wrote IR to: " + absolutePathToIr);
+    }
 
     const configJsonFile = await tmp.file({
         tmpdir: workspaceTempDir.path
@@ -214,15 +221,12 @@ async function writeFilesToDiskAndRunGenerator({
         absolutePathToOutput: absolutePathToTmpOutputDirectory,
         absolutePathToSnippet: absolutePathToTmpSnippetJSON,
         absolutePathToIr,
-        absolutePathToFernDefinition,
-        absolutePathToFernConfig,
         absolutePathToWriteConfigJson,
         workspaceName: workspace.name,
         organization,
         outputVersion: outputVersionOverride,
         keepDocker,
         generatorInvocation,
-        context,
         writeUnitTests
     });
 

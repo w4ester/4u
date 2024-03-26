@@ -3,7 +3,7 @@ import { DependencyManager, DependencyType, ExportedFilePath, getTextOfTsNode } 
 import { GeneratedSdkClientClass, SdkContext } from "@fern-typescript/contexts";
 import path from "path";
 import { Directory, ts } from "ts-morph";
-import { arrayOf, code, Code, literalOf } from "ts-poet";
+import { arrayOf, code, Code, conditionalOutput, literalOf } from "ts-poet";
 
 export class JestTestGenerator {
     constructor(
@@ -75,6 +75,7 @@ export class JestTestGenerator {
         this.dependencyManager.addDependency("jest", "^29.7.0", { type: DependencyType.DEV });
         this.dependencyManager.addDependency("@types/jest", "^29.5.5", { type: DependencyType.DEV });
         this.dependencyManager.addDependency("ts-jest", "^29.1.1", { type: DependencyType.DEV });
+        this.dependencyManager.addDependency("jest-environment-jsdom", "^29.7.0", { type: DependencyType.DEV });
         // this.dependencyManager.addDependency("jest-dev-server", "^10.0.0", { type: DependencyType.DEV });
     }
 
@@ -89,15 +90,46 @@ export class JestTestGenerator {
         };
     }
 
+    public get extraFiles(): Record<string, string> {
+        return {
+            "tests/custom.test.ts": `
+/**
+* This is a custom test file, if you wish to add more tests
+* to your SDK.
+* Be sure to mark this file in \`.fernignore\`.
+*
+* If you include example requests/responses in your fern definition,
+* you will have tests automatically generated for you.
+*/
+describe("test", () => {
+    it("default", () => {
+        expect(true).toBe(true);
+    });
+});`
+        };
+    }
+
     public buildFile(
         serviceName: string,
         service: IR.HttpService,
         serviceGenerator: GeneratedSdkClientClass,
         context: SdkContext
     ): Code {
+        const adaptResponse = conditionalOutput(
+            // The string to output at the usage site
+            "adaptResponse",
+            // The code to conditionally output if convertTimestamps is used
+            code`function adaptResponse(response: unknown) {
+                return JSON.parse(JSON.stringify(
+                    response,
+                    (_key, value) => (value instanceof Set ? [...value] : value)
+                    ));
+                }`
+        );
+
         const tests = service.endpoints
             .map((endpoint) => {
-                return this.buildTest(endpoint, serviceGenerator, context);
+                return this.buildTest(adaptResponse, endpoint, serviceGenerator, context);
             })
             .filter(Boolean);
 
@@ -138,6 +170,8 @@ export class JestTestGenerator {
                 ${generateEnvironment()}
             })
 
+            ${adaptResponse.ifUsed}
+
             describe("${serviceName}", () => {
                 ${tests.length > 0 ? tests : fallbackTest}
             });
@@ -145,6 +179,7 @@ export class JestTestGenerator {
     }
 
     private buildTest(
+        adaptResponse: ReturnType<typeof conditionalOutput>,
         endpoint: IR.HttpEndpoint,
         serviceGenerator: GeneratedSdkClientClass,
         context: SdkContext
@@ -212,7 +247,7 @@ export class JestTestGenerator {
                             datetime: (value) => code`new Date(${value.toISOString()})`,
                             date: (value) => code`new Date(${value})`,
                             uuid: (value) => literalOf(value),
-                            _other: (value) => literalOf(value),
+                            _other: (value) => literalOf(value)
                         });
                     },
                     container: (value) => {
@@ -285,7 +320,7 @@ export class JestTestGenerator {
         };
 
         const response = getExpectedResponse();
-        const expected = shouldJsonParseStringify ? code`JSON.parse(JSON.stringify(response))` : "response";
+        const expected = shouldJsonParseStringify ? code`${adaptResponse}(response)` : "response";
 
         return code`
             test("${endpoint.name.camelCase.unsafeName}", async () => {

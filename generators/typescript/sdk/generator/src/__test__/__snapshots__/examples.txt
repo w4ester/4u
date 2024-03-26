@@ -2381,10 +2381,14 @@ const client = new TestSdkClient({
     environment: process.env.TESTS_BASE_URL || "test",
 });
 
+function adaptResponse(response: unknown) {
+    return JSON.parse(JSON.stringify(response, (_key, value) => (value instanceof Set ? [...value] : value)));
+}
+
 describe("Service", () => {
     test("getException", async () => {
         const response = await client.file.notification.service.getException("notification-hsy129x");
-        expect(JSON.parse(JSON.stringify(response))).toEqual({
+        expect(adaptResponse(response)).toEqual({
             "type": "generic",
             "exceptionType": "Unavailable",
             "exceptionMessage": "This component is unavailable!",
@@ -2470,6 +2474,10 @@ const client = new TestSdkClient({
     environment: process.env.TESTS_BASE_URL || "test",
 });
 
+function adaptResponse(response: unknown) {
+    return JSON.parse(JSON.stringify(response, (_key, value) => (value instanceof Set ? [...value] : value)));
+}
+
 describe("Service", () => {
     test("getMovie", async () => {
         const response = await client.service.getMovie("movie-c06a4ad7");
@@ -2509,7 +2517,7 @@ describe("Service", () => {
 
     test("getMetadata", async () => {
         const response = await client.service.getMetadata({ xApiVersion: "0.0.1", shallow: false, tag: "development" });
-        expect(JSON.parse(JSON.stringify(response))).toEqual({
+        expect(adaptResponse(response)).toEqual({
             "type": "html",
             "extra": { "version": "0.0.1", "tenancy": "test" },
             "tags": ["development", "public"],
@@ -2519,5 +2527,19 @@ describe("Service", () => {
 });
 
 
-"
+/// File: tests/custom.test.ts
+
+/**
+* This is a custom test file, if you wish to add more tests
+* to your SDK.
+* Be sure to mark this file in \`.fernignore\`.
+*
+* If you include example requests/responses in your fern definition,
+* you will have tests automatically generated for you.
+*/
+describe("test", () => {
+    it("default", () => {
+        expect(true).toBe(true);
+    });
+});"
 `;

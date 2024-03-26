@@ -337,6 +337,10 @@ export class SdkGenerator {
                 ...this.extraScripts,
                 ...this.jestTestGenerator.scripts
             };
+            this.extraFiles = {
+                ...this.extraFiles,
+                ...this.jestTestGenerator.extraFiles
+            };
         }
 
         if (this.config.snippetFilepath != null) {

@@ -5,9 +5,13 @@
 import { SeedExamplesClient } from "../src/Client";
 
 const client = new SeedExamplesClient({
-    token: process.env.ENV_TOKEN,
+    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
 });
+
+function adaptResponse(response: unknown) {
+    return JSON.parse(JSON.stringify(response, (_key, value) => (value instanceof Set ? [...value] : value)));
+}
 
 describe("Service", () => {
     test("getMovie", async () => {
@@ -55,7 +59,7 @@ describe("Service", () => {
             shallow: false,
             tag: "development",
         });
-        expect(response).toEqual({
+        expect(adaptResponse(response)).toEqual({
             type: "html",
             extra: { version: "0.0.1", tenancy: "test" },
             tags: ["development", "public"],

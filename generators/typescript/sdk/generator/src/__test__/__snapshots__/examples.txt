@@ -2377,8 +2377,9 @@ export declare namespace Tree {
 import { TestSdkClient } from "../../../src/Client";
 
 const client = new TestSdkClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
+    "environment": process.env.TESTS_BASE_URL || "test",
+    "notificationId": "notificationId",
+    "token": process.env.TESTS_AUTH || "test",
 });
 
 function adaptResponse(response: unknown) {
@@ -2406,8 +2407,8 @@ describe("Service", () => {
 import { TestSdkClient } from "../../src/Client";
 
 const client = new TestSdkClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
+    "environment": process.env.TESTS_BASE_URL || "test",
+    "token": process.env.TESTS_AUTH || "test",
 });
 
 describe("Service", () => {
@@ -2425,8 +2426,8 @@ describe("Service", () => {
 import { TestSdkClient } from "../../src/Client";
 
 const client = new TestSdkClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
+    "environment": process.env.TESTS_BASE_URL || "test",
+    "token": process.env.TESTS_AUTH || "test",
 });
 
 describe("Service", () => {
@@ -2450,8 +2451,8 @@ describe("Service", () => {
 import { TestSdkClient } from "../src/Client";
 
 const client = new TestSdkClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
+    "environment": process.env.TESTS_BASE_URL || "test",
+    "token": process.env.TESTS_AUTH || "test",
 });
 
 describe("TestSdkClient", () => {
@@ -2470,8 +2471,8 @@ describe("TestSdkClient", () => {
 import { TestSdkClient } from "../src/Client";
 
 const client = new TestSdkClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
+    "environment": process.env.TESTS_BASE_URL || "test",
+    "token": process.env.TESTS_AUTH || "test",
 });
 
 function adaptResponse(response: unknown) {

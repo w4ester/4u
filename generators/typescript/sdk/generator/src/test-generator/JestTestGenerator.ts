@@ -144,31 +144,39 @@ describe("test", () => {
         `;
 
         const importStatement = context.sdkClientClass.getReferenceToClientClass({ isRoot: true });
+        const envValue = code`process.env.TESTS_BASE_URL || "test"`;
         const generateEnvironment = () => {
-            const defaultEnvironment = code`environment: process.env.TESTS_BASE_URL || "test"`;
             if (!this.ir.environments) {
-                return defaultEnvironment;
+                return envValue;
             }
-            return this.ir.environments.environments._visit({
+            return this.ir.environments.environments._visit<Code | Record<string, Code>>({
                 singleBaseUrl: (environment) => {
-                    return defaultEnvironment;
+                    return envValue;
                 },
                 multipleBaseUrls: (environment) => {
-                    return code`environment: {
-                        ${environment.environments.map((env) => {
-                            return code`${env.name.camelCase.safeName}: process.env.TESTS_BASE_URL || "test",`;
-                        })}
-                    }`;
+                    return Object.fromEntries(
+                        environment.environments.map((env) => {
+                            return [env.name.camelCase.safeName, envValue];
+                        })
+                    );
                 },
-                _other: () => defaultEnvironment
+                _other: () => envValue
             });
         };
 
+        const options: [string, unknown][] = [["environment", generateEnvironment()]];
+        service.pathParameters.forEach((pathParameter) => {
+            options.push([
+                pathParameter.name.camelCase.unsafeName,
+                pathParameter.variable ?? pathParameter.name.camelCase.unsafeName
+            ]);
+        });
+        if (this.ir.auth.schemes.length > 0) {
+            options.push(["token", code`process.env.TESTS_AUTH || "test"`]);
+        }
+
         return code`
-            const client = new ${getTextOfTsNode(importStatement.getEntityName())}({
-                token: process.env.ENV_TOKEN || "token",
-                ${generateEnvironment()}
-            })
+            const client = new ${getTextOfTsNode(importStatement.getEntityName())}(${Object.fromEntries(options)});
 
             ${adaptResponse.ifUsed}
 

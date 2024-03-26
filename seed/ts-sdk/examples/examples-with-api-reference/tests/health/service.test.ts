@@ -5,13 +5,13 @@
 import { SeedExamplesClient } from "../../src/Client";
 
 const client = new SeedExamplesClient({
-    token: process.env.ENV_TOKEN,
+    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
 });
 
 describe("Service", () => {
     test("check", async () => {
-        const response = await client.health.service.check("id-2sdx82h");
+        const response = await client.health.service.check('id-2sdx82h');
         expect(response).toEqual(undefined);
     });
 

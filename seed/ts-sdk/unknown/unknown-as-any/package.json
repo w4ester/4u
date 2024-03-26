@@ -6,10 +6,10 @@
     "main": "./index.js",
     "types": "./index.d.ts",
     "scripts": {
-        "format": "prettier --write 'src/**/*.ts'",
+        "format": "prettier . --write --ignore-unknown",
         "build": "tsc",
         "prepack": "cp -rv dist/. .",
-        "test": "jest"
+        "test": "fern test --command='jest'"
     },
     "dependencies": {
         "form-data": "4.0.0",

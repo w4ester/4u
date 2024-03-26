@@ -5,14 +5,18 @@
 import { SeedExamplesClient } from "../../../src/Client";
 
 const client = new SeedExamplesClient({
-    token: process.env.ENV_TOKEN,
+    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
 });
+
+function adaptResponse(response: unknown) {
+    return JSON.parse(JSON.stringify(response, (_key, value) => (value instanceof Set ? [...value] : value)));
+}
 
 describe("Service", () => {
     test("getException", async () => {
         const response = await client.file.notification.service.getException("notification-hsy129x");
-        expect(response).toEqual({
+        expect(adaptResponse(response)).toEqual({
             type: "generic",
             exceptionType: "Unavailable",
             exceptionMessage: "This component is unavailable!",

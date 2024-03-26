@@ -4,7 +4,7 @@
     "private": false,
     "repository": "https://github.com/exhaustive/fern",
     "scripts": {
-        "format": "prettier --write 'src/**/*.ts'",
+        "format": "prettier . --write --ignore-unknown",
         "compile": "tsc",
         "bundle": "node build.js",
         "build": "yarn compile && yarn bundle"

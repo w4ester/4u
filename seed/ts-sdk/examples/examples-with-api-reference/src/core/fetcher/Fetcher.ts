@@ -132,18 +132,13 @@ async function fetcherImpl<R = unknown>(args: Fetcher.Args): Promise<APIResponse
             body = response.body;
         } else {
             const text = await response.text();
+
             if (text.length > 0) {
                 try {
                     body = JSON.parse(text);
                 } catch (err) {
-                    return {
-                        ok: false,
-                        error: {
-                            reason: "non-json",
-                            statusCode: response.status,
-                            rawBody: text,
-                        },
-                    };
+                    console.log(text, String(text));
+                    body = null;
                 }
             }
         }

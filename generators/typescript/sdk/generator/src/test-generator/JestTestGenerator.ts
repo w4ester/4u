@@ -1,18 +1,16 @@
 import * as IR from "@fern-fern/ir-sdk/api";
-import {
-    DependencyManager,
-    DependencyType,
-    ExportedFilePath,
-    getTextOfTsNode,
-    PackageId
-} from "@fern-typescript/commons";
+import { DependencyManager, DependencyType, ExportedFilePath, getTextOfTsNode } from "@fern-typescript/commons";
 import { GeneratedSdkClientClass, SdkContext } from "@fern-typescript/contexts";
 import path from "path";
 import { Directory, ts } from "ts-morph";
-import { code, Code } from "ts-poet";
+import { arrayOf, code, Code, literalOf } from "ts-poet";
 
 export class JestTestGenerator {
-    constructor(private dependencyManager: DependencyManager, private rootDirectory: Directory) {}
+    constructor(
+        private ir: IR.IntermediateRepresentation,
+        private dependencyManager: DependencyManager,
+        private rootDirectory: Directory
+    ) {}
 
     private addJestConfig(): void {
         const jestConfig = this.rootDirectory.createSourceFile(
@@ -92,7 +90,6 @@ export class JestTestGenerator {
     }
 
     public buildFile(
-        packageId: PackageId,
         serviceName: string,
         service: IR.HttpService,
         serviceGenerator: GeneratedSdkClientClass,
@@ -100,7 +97,7 @@ export class JestTestGenerator {
     ): Code {
         const tests = service.endpoints
             .map((endpoint) => {
-                return this.buildTest(service, endpoint, serviceGenerator, context);
+                return this.buildTest(endpoint, serviceGenerator, context);
             })
             .filter(Boolean);
 
@@ -115,11 +112,30 @@ export class JestTestGenerator {
         `;
 
         const importStatement = context.sdkClientClass.getReferenceToClientClass({ isRoot: true });
+        const generateEnvironment = () => {
+            const defaultEnvironment = code`environment: process.env.TESTS_BASE_URL || "test"`;
+            if (!this.ir.environments) {
+                return defaultEnvironment;
+            }
+            return this.ir.environments.environments._visit({
+                singleBaseUrl: (environment) => {
+                    return defaultEnvironment;
+                },
+                multipleBaseUrls: (environment) => {
+                    return code`environment: {
+                        ${environment.environments.map((env) => {
+                            return code`${env.name.camelCase.safeName}: process.env.TESTS_BASE_URL || "test",`;
+                        })}
+                    }`;
+                },
+                _other: () => defaultEnvironment
+            });
+        };
 
         return code`
             const client = new ${getTextOfTsNode(importStatement.getEntityName())}({
-                token: process.env.ENV_TOKEN,
-                environment: process.env.TESTS_BASE_URL || "test",
+                token: process.env.ENV_TOKEN || "token",
+                ${generateEnvironment()}
             })
 
             describe("${serviceName}", () => {
@@ -129,7 +145,6 @@ export class JestTestGenerator {
     }
 
     private buildTest(
-        service: IR.HttpService,
         endpoint: IR.HttpEndpoint,
         serviceGenerator: GeneratedSdkClientClass,
         context: SdkContext
@@ -176,65 +191,106 @@ export class JestTestGenerator {
             throw new Error("Only successful responses are supported");
         }
 
+        // For certain complex types, we just JSON.parse/JSON.stringify to simplify some times
+        let shouldJsonParseStringify = false;
+
         const getExpectedResponse = () => {
             const body = example.response.body;
             if (!body) {
                 return code`undefined`;
             }
 
-            const visitShape: IR.ExampleTypeReferenceShape._Visitor<Code | unknown> = {
-                primitive: (value) => {
-                    return value._visit({
-                        integer: (value) => code`${value}`,
-                        double: (value) => code`${value}`,
-                        string: (value) => code`"${value.original}"`,
-                        boolean: (value) => code`${value}`,
-                        long: (value) => code`${value}`,
-                        datetime: (value) => code`new Date(${value.toISOString()})`,
-                        date: (value) => code`new Date(${value})`,
-                        uuid: (value) => code`"${value}"`,
-                        _other: (value) => code`${value}`
-                    });
-                },
-                container: (value) => {
-                    return body.jsonExample;
-                },
-                named: (value) => {
-                    return value.shape._visit({
-                        alias: (value) => {
-                            return code`${value.value.shape._visit(visitShape)}`;
-                        },
-                        enum: (value) => {
-                            return code`${value.value.wireValue}`;
-                        },
-                        object: (value) => {
-                            return code`${body.jsonExample}`;
-                        },
-                        union: (value) => {
-                            return code`${body.jsonExample}`;
-                        },
-                        undiscriminatedUnion: (value) => {
-                            return code`${body.jsonExample}`;
-                        },
-                        _other: (value: { type: string }) => {
-                            return body.jsonExample;
-                        }
-                    });
-                },
-                unknown: (value) => {
-                    return body.jsonExample;
-                },
-                _other: (value) => {
-                    return body.jsonExample;
-                }
+            const visitExampleTypeReference = ({ shape, jsonExample }: IR.ExampleTypeReference): Code | unknown => {
+                return shape._visit({
+                    primitive: (value) => {
+                        return value._visit({
+                            integer: (value) => literalOf(value),
+                            double: (value) => literalOf(value),
+                            string: (value) => literalOf(value.original),
+                            boolean: (value) => literalOf(value),
+                            long: (value) => literalOf(value),
+                            datetime: (value) => code`new Date(${value.toISOString()})`,
+                            date: (value) => code`new Date(${value})`,
+                            uuid: (value) => literalOf(value),
+                            _other: (value) => literalOf(value),
+                        });
+                    },
+                    container: (value) => {
+                        return value._visit({
+                            list: (value) => {
+                                return arrayOf(value.map((item) => visitExampleTypeReference(item)));
+                            },
+                            map: (value) => {
+                                return Object.fromEntries(
+                                    value.map((item) => {
+                                        return [item.key.jsonExample, visitExampleTypeReference(item.value)];
+                                    })
+                                );
+                            },
+                            optional: (value) => {
+                                if (!value) {
+                                    return code`undefined`;
+                                }
+                                return visitExampleTypeReference(value);
+                            },
+                            set: (value) => {
+                                return code`new Set(${arrayOf(value.map(visitExampleTypeReference))})`;
+                            },
+                            _other: (value) => {
+                                return jsonExample;
+                            }
+                        });
+                    },
+                    named: (value) => {
+                        return value.shape._visit({
+                            alias: (value) => {
+                                return code`${visitExampleTypeReference(value.value)}`;
+                            },
+                            enum: (value) => {
+                                return code`${value.value.wireValue}`;
+                            },
+                            object: (value) => {
+                                return Object.fromEntries(
+                                    value.properties.map((property) => {
+                                        return [
+                                            property.name.name.camelCase.unsafeName,
+                                            visitExampleTypeReference(property.value)
+                                        ];
+                                    })
+                                );
+                            },
+                            union: (value) => {
+                                shouldJsonParseStringify = true;
+                                return jsonExample;
+                            },
+                            undiscriminatedUnion: (value) => {
+                                shouldJsonParseStringify = true;
+                                return code`${visitExampleTypeReference(value.singleUnionType)}`;
+                            },
+                            _other: (value: { type: string }) => {
+                                return jsonExample;
+                            }
+                        });
+                    },
+                    unknown: (value) => {
+                        return code`${literalOf(jsonExample)}`;
+                    },
+                    _other: (value) => {
+                        return jsonExample;
+                    }
+                });
             };
 
-            return body.shape._visit(visitShape);
+            return visitExampleTypeReference(body);
         };
+
+        const response = getExpectedResponse();
+        const expected = shouldJsonParseStringify ? code`JSON.parse(JSON.stringify(response))` : "response";
+
         return code`
             test("${endpoint.name.camelCase.unsafeName}", async () => {
                 const response = ${getTextOfTsNode(generatedExample)};
-                expect(response).toEqual(${getExpectedResponse()});
+                expect(${expected}).toEqual(${response});
             });
           `;
     }

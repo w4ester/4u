@@ -2376,12 +2376,15 @@ export declare namespace Tree {
 
 import { TestSdkClient } from "../../../src/Client";
 
-const client = new TestSdkClient({ token: process.env.ENV_TOKEN, environment: process.env.TESTS_BASE_URL || "test" });
+const client = new TestSdkClient({
+    token: process.env.ENV_TOKEN || "token",
+    environment: process.env.TESTS_BASE_URL || "test",
+});
 
 describe("Service", () => {
     test("getException", async () => {
         const response = await client.file.notification.service.getException("notification-hsy129x");
-        expect(response).toEqual({
+        expect(JSON.parse(JSON.stringify(response))).toEqual({
             "type": "generic",
             "exceptionType": "Unavailable",
             "exceptionMessage": "This component is unavailable!",
@@ -2398,7 +2401,10 @@ describe("Service", () => {
 
 import { TestSdkClient } from "../../src/Client";
 
-const client = new TestSdkClient({ token: process.env.ENV_TOKEN, environment: process.env.TESTS_BASE_URL || "test" });
+const client = new TestSdkClient({
+    token: process.env.ENV_TOKEN || "token",
+    environment: process.env.TESTS_BASE_URL || "test",
+});
 
 describe("Service", () => {
     test("constructor", () => {
@@ -2414,7 +2420,10 @@ describe("Service", () => {
 
 import { TestSdkClient } from "../../src/Client";
 
-const client = new TestSdkClient({ token: process.env.ENV_TOKEN, environment: process.env.TESTS_BASE_URL || "test" });
+const client = new TestSdkClient({
+    token: process.env.ENV_TOKEN || "token",
+    environment: process.env.TESTS_BASE_URL || "test",
+});
 
 describe("Service", () => {
     test("check", async () => {
@@ -2436,12 +2445,15 @@ describe("Service", () => {
 
 import { TestSdkClient } from "../src/Client";
 
-const client = new TestSdkClient({ token: process.env.ENV_TOKEN, environment: process.env.TESTS_BASE_URL || "test" });
+const client = new TestSdkClient({
+    token: process.env.ENV_TOKEN || "token",
+    environment: process.env.TESTS_BASE_URL || "test",
+});
 
 describe("TestSdkClient", () => {
     test("echo", async () => {
         const response = await client.echo("Hello world!\\\\n\\\\nwith\\\\n\\\\tnewlines");
-        expect(response).toEqual("Hello world!\\n\\nwith\\n\\tnewlines");
+        expect(response).toEqual("Hello world!\\\\n\\\\nwith\\\\n\\\\tnewlines");
     });
 });
 
@@ -2453,7 +2465,10 @@ describe("TestSdkClient", () => {
 
 import { TestSdkClient } from "../src/Client";
 
-const client = new TestSdkClient({ token: process.env.ENV_TOKEN, environment: process.env.TESTS_BASE_URL || "test" });
+const client = new TestSdkClient({
+    token: process.env.ENV_TOKEN || "token",
+    environment: process.env.TESTS_BASE_URL || "test",
+});
 
 describe("Service", () => {
     test("getMovie", async () => {
@@ -2494,7 +2509,7 @@ describe("Service", () => {
 
     test("getMetadata", async () => {
         const response = await client.service.getMetadata({ xApiVersion: "0.0.1", shallow: false, tag: "development" });
-        expect(response).toEqual({
+        expect(JSON.parse(JSON.stringify(response))).toEqual({
             "type": "html",
             "extra": { "version": "0.0.1", "tenancy": "test" },
             "tags": ["development", "public"],

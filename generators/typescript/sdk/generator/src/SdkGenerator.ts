@@ -291,7 +291,11 @@ export class SdkGenerator {
         this.sdkInlinedRequestBodySchemaGenerator = new SdkInlinedRequestBodySchemaGenerator({
             includeSerdeLayer: config.includeSerdeLayer
         });
-        this.jestTestGenerator = new JestTestGenerator(this.dependencyManager, this.rootDirectory);
+        this.jestTestGenerator = new JestTestGenerator(
+            intermediateRepresentation,
+            this.dependencyManager,
+            this.rootDirectory
+        );
     }
 
     public async generate(): Promise<TypescriptProject> {
@@ -539,7 +543,6 @@ export class SdkGenerator {
                 run: ({ sourceFile, importsManager }) => {
                     const context = this.generateSdkContext({ sourceFile, importsManager });
                     const file = this.jestTestGenerator.buildFile(
-                        packageId,
                         this.sdkClientClassDeclarationReferencer.getExportedName(packageId),
                         service,
                         context.sdkClientClass.getGeneratedSdkClientClass(packageId),

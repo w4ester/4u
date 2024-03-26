@@ -5,10 +5,7 @@
 import * as SeedEnum from "../src/api";
 import { SeedEnumClient } from "../src/Client";
 
-const client = new SeedEnumClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedEnumClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("QueryParam", () => {
     test("send", async () => {

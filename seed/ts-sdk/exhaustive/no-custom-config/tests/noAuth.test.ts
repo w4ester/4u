@@ -5,8 +5,8 @@
 import { SeedExhaustiveClient } from "../src/Client";
 
 const client = new SeedExhaustiveClient({
-    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
+    token: process.env.TESTS_AUTH || "test",
 });
 
 describe("NoAuth", () => {

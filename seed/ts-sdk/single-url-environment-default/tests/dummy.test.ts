@@ -5,8 +5,8 @@
 import { SeedSingleUrlEnvironmentDefaultClient } from "../src/Client";
 
 const client = new SeedSingleUrlEnvironmentDefaultClient({
-    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
+    token: process.env.TESTS_AUTH || "test",
 });
 
 describe("Dummy", () => {

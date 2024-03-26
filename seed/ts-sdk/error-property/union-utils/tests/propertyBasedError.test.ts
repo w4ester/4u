@@ -4,10 +4,7 @@
 
 import { SeedErrorPropertyClient } from "../src/Client";
 
-const client = new SeedErrorPropertyClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedErrorPropertyClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("PropertyBasedError", () => {
     test("constructor", () => {

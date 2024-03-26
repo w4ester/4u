@@ -5,8 +5,8 @@
 import { SeedBearerTokenEnvironmentVariableClient } from "../src/Client";
 
 const client = new SeedBearerTokenEnvironmentVariableClient({
-    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
+    apiKey: process.env.COURIER_API_KEY || "test",
 });
 
 describe("Service", () => {

@@ -4,10 +4,7 @@
 
 import { SeedApiClient } from "../../src/Client";
 
-const client = new SeedApiClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedApiClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("Folder", () => {
     test("constructor", () => {

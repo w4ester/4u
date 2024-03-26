@@ -4,10 +4,7 @@
 
 import { SeedNurseryApiClient } from "../src/Client";
 
-const client = new SeedNurseryApiClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedNurseryApiClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("Package", () => {
     test("constructor", () => {

@@ -5,8 +5,8 @@
 import { SeedIdempotencyHeadersClient } from "../src/Client";
 
 const client = new SeedIdempotencyHeadersClient({
-    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
+    token: process.env.TESTS_AUTH || "test",
 });
 
 describe("Payment", () => {

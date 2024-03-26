@@ -5,8 +5,8 @@
 import { SeedCustomAuthClient } from "../src/Client";
 
 const client = new SeedCustomAuthClient({
-    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
+    token: process.env.TESTS_AUTH || "test",
 });
 
 describe("CustomAuth", () => {

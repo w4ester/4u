@@ -155,8 +155,8 @@ describe("test", () => {
                 },
                 multipleBaseUrls: (environment) => {
                     return Object.fromEntries(
-                        environment.environments.map((env) => {
-                            return [env.name.camelCase.safeName, envValue];
+                        environment.baseUrls.map((url) => {
+                            return [url.name.camelCase.unsafeName, envValue];
                         })
                     );
                 },
@@ -165,14 +165,38 @@ describe("test", () => {
         };
 
         const options: [string, unknown][] = [["environment", generateEnvironment()]];
-        service.pathParameters.forEach((pathParameter) => {
+        this.ir.pathParameters.forEach((pathParameter) => {
             options.push([
                 pathParameter.name.camelCase.unsafeName,
                 pathParameter.variable ?? pathParameter.name.camelCase.unsafeName
             ]);
         });
-        if (this.ir.auth.schemes.length > 0) {
-            options.push(["token", code`process.env.TESTS_AUTH || "test"`]);
+        this.ir.auth.schemes.forEach((schema) => {
+            schema._visit({
+                bearer: (schema) => {
+                    options.push([
+                        schema.token.camelCase.unsafeName,
+                        code`process.env.${schema.tokenEnvVar || "TESTS_AUTH"} || "test"`
+                    ]);
+                },
+                header: (schema) => {
+                    options.push([
+                        schema.name.name.camelCase.unsafeName,
+                        code`process.env.${schema.headerEnvVar || "TESTS_AUTH"} || "test"`
+                    ]);
+                },
+                basic: (schema) => {
+                    options.push([schema.username.camelCase.safeName, code`process.env.${schema.usernameEnvVar || "TESTS_USERNAME"} || "test"`]);
+                    options.push([schema.password.camelCase.unsafeName, code`process.env.${schema.passwordEnvVar || "TESTS_PASSWORD"} || "test"`]);
+                },
+                _other: () => {
+                    // noop
+                }
+            });
+        });
+        if (this.ir.auth.schemes.some((scheme) => scheme.type === "basic")) {
+            options.push(["username", code`process.env.TESTS_USERNAME || "test"`]);
+            options.push(["password", code`process.env.TESTS_PASSWORD || "test"`]);
         }
 
         return code`

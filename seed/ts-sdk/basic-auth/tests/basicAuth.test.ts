@@ -5,8 +5,9 @@
 import { SeedBasicAuthClient } from "../src/Client";
 
 const client = new SeedBasicAuthClient({
-    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
+    username: process.env.TESTS_USERNAME || "test",
+    password: process.env.TESTS_PASSWORD || "test",
 });
 
 describe("BasicAuth", () => {

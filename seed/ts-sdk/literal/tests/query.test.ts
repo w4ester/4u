@@ -4,10 +4,7 @@
 
 import { SeedLiteralClient } from "../src/Client";
 
-const client = new SeedLiteralClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedLiteralClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("Query", () => {
     test("send", async () => {

@@ -4,10 +4,7 @@
 
 import { SeedUnknownAsAnyClient } from "../src/Client";
 
-const client = new SeedUnknownAsAnyClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedUnknownAsAnyClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("Unknown", () => {
     test("constructor", () => {

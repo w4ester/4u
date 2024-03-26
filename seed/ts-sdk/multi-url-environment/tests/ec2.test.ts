@@ -5,11 +5,8 @@
 import { SeedMultiUrlEnvironmentClient } from "../src/Client";
 
 const client = new SeedMultiUrlEnvironmentClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: {
-        production: process.env.TESTS_BASE_URL || "test",
-        staging: process.env.TESTS_BASE_URL || "test",
-    },
+    environment: { Production: process.env.TESTS_BASE_URL || "test", Staging: process.env.TESTS_BASE_URL || "test" },
+    token: process.env.TESTS_AUTH || "test",
 });
 
 describe("Ec2", () => {

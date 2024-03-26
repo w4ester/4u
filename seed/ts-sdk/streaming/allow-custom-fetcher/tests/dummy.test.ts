@@ -4,10 +4,7 @@
 
 import { SeedStreamingClient } from "../src/Client";
 
-const client = new SeedStreamingClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedStreamingClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("Dummy", () => {
     test("constructor", () => {

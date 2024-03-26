@@ -5,8 +5,8 @@
 import { SeedApiWideBasePathClient } from "../src/Client";
 
 const client = new SeedApiWideBasePathClient({
-    token: process.env.ENV_TOKEN || "token",
     environment: process.env.TESTS_BASE_URL || "test",
+    pathParam: "pathParam",
 });
 
 describe("Service", () => {

@@ -4,10 +4,7 @@
 
 import { SeedObjectsWithImportsClient } from "../src/Client";
 
-const client = new SeedObjectsWithImportsClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedObjectsWithImportsClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("Optional", () => {
     test("constructor", () => {

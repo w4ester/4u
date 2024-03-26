@@ -4,10 +4,7 @@
 
 import { SeedCodeSamplesClient } from "../src/Client";
 
-const client = new SeedCodeSamplesClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedCodeSamplesClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("Service", () => {
     test("hello", async () => {

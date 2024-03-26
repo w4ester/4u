@@ -4,10 +4,7 @@
 
 import { SeedUnionsClient } from "../src/Client";
 
-const client = new SeedUnionsClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedUnionsClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("Union", () => {
     test("constructor", () => {

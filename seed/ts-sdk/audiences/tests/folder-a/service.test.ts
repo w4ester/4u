@@ -4,10 +4,7 @@
 
 import { SeedAudiencesClient } from "../../src/Client";
 
-const client = new SeedAudiencesClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedAudiencesClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("Service", () => {
     test("constructor", () => {

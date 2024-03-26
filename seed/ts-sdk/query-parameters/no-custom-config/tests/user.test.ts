@@ -4,10 +4,7 @@
 
 import { SeedQueryParametersClient } from "../src/Client";
 
-const client = new SeedQueryParametersClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedQueryParametersClient({ environment: process.env.TESTS_BASE_URL || "test" });
 
 describe("User", () => {
     test("constructor", () => {

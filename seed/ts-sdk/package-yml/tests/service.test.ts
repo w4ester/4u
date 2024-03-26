@@ -4,10 +4,7 @@
 
 import { SeedPackageYmlClient } from "../src/Client";
 
-const client = new SeedPackageYmlClient({
-    token: process.env.ENV_TOKEN || "token",
-    environment: process.env.TESTS_BASE_URL || "test",
-});
+const client = new SeedPackageYmlClient({ environment: process.env.TESTS_BASE_URL || "test", id: "id" });
 
 describe("Service", () => {
     test("nop", async () => {

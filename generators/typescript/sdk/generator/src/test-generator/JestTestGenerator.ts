@@ -72,11 +72,11 @@ export class JestTestGenerator {
     }
 
     private addDependencies(): void {
-        this.dependencyManager.addDependency("jest", "^29.7.0", { type: DependencyType.DEV });
-        this.dependencyManager.addDependency("@types/jest", "^29.5.5", { type: DependencyType.DEV });
-        this.dependencyManager.addDependency("ts-jest", "^29.1.1", { type: DependencyType.DEV });
-        this.dependencyManager.addDependency("jest-environment-jsdom", "^29.7.0", { type: DependencyType.DEV });
-        // this.dependencyManager.addDependency("jest-dev-server", "^10.0.0", { type: DependencyType.DEV });
+        this.dependencyManager.addDependency("jest", "29.7.0", { type: DependencyType.DEV });
+        this.dependencyManager.addDependency("@types/jest", "29.5.5", { type: DependencyType.DEV });
+        this.dependencyManager.addDependency("ts-jest", "29.1.1", { type: DependencyType.DEV });
+        this.dependencyManager.addDependency("jest-environment-jsdom", "29.7.0", { type: DependencyType.DEV });
+        // this.dependencyManager.addDependency("jest-dev-server", "10.0.0", { type: DependencyType.DEV });
     }
 
     public addExtras(): void {
@@ -200,7 +200,7 @@ describe("test", () => {
         }
         this.ir.headers.forEach((header) => {
             // We don't need to include literal types because they will automatically be included
-            if (header.valueType.type === 'container' && header.valueType.container.type === "literal") {
+            if (header.valueType.type === "container" && header.valueType.container.type === "literal") {
                 return;
             }
             options.push([header.name.name.camelCase.unsafeName, code`process.env.TESTS_HEADER || "test"`]);

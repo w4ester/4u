@@ -186,8 +186,14 @@ describe("test", () => {
                     ]);
                 },
                 basic: (schema) => {
-                    options.push([schema.username.camelCase.safeName, code`process.env.${schema.usernameEnvVar || "TESTS_USERNAME"} || "test"`]);
-                    options.push([schema.password.camelCase.unsafeName, code`process.env.${schema.passwordEnvVar || "TESTS_PASSWORD"} || "test"`]);
+                    options.push([
+                        schema.username.camelCase.safeName,
+                        code`process.env.${schema.usernameEnvVar ?? "TESTS_USERNAME"} || "test"`
+                    ]);
+                    options.push([
+                        schema.password.camelCase.unsafeName,
+                        code`process.env.${schema.passwordEnvVar ?? "TESTS_PASSWORD"} || "test"`
+                    ]);
                 },
                 _other: () => {
                     // noop

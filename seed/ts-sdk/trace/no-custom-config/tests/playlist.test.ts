@@ -7,6 +7,7 @@ import { SeedTraceClient } from "../src/Client";
 const client = new SeedTraceClient({
     environment: process.env.TESTS_BASE_URL || "test",
     token: process.env.TESTS_AUTH || "test",
+    xRandomHeader: process.env.TESTS_HEADER || "test",
 });
 
 describe("Playlist", () => {

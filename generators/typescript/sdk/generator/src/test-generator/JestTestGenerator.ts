@@ -123,8 +123,8 @@ describe("test", () => {
                 return JSON.parse(JSON.stringify(
                     response,
                     (_key, value) => (value instanceof Set ? [...value] : value)
-                    ));
-                }`
+                ));
+            }`
         );
 
         const tests = service.endpoints
@@ -176,13 +176,13 @@ describe("test", () => {
                 bearer: (schema) => {
                     options.push([
                         schema.token.camelCase.unsafeName,
-                        code`process.env.${schema.tokenEnvVar || "TESTS_AUTH"} || "test"`
+                        code`process.env.${schema.tokenEnvVar ?? "TESTS_AUTH"} || "test"`
                     ]);
                 },
                 header: (schema) => {
                     options.push([
                         schema.name.name.camelCase.unsafeName,
-                        code`process.env.${schema.headerEnvVar || "TESTS_AUTH"} || "test"`
+                        code`process.env.${schema.headerEnvVar ?? "TESTS_AUTH"} || "test"`
                     ]);
                 },
                 basic: (schema) => {
@@ -198,6 +198,13 @@ describe("test", () => {
             options.push(["username", code`process.env.TESTS_USERNAME || "test"`]);
             options.push(["password", code`process.env.TESTS_PASSWORD || "test"`]);
         }
+        this.ir.headers.forEach((header) => {
+            // We don't need to include literal types because they will automatically be included
+            if (header.valueType.type === 'container' && header.valueType.container.type === "literal") {
+                return;
+            }
+            options.push([header.name.name.camelCase.unsafeName, code`process.env.TESTS_HEADER || "test"`]);
+        });
 
         return code`
             const client = new ${getTextOfTsNode(importStatement.getEntityName())}(${Object.fromEntries(options)});

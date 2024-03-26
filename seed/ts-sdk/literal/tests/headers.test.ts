@@ -4,7 +4,11 @@
 
 import { SeedLiteralClient } from "../src/Client";
 
-const client = new SeedLiteralClient({ environment: process.env.TESTS_BASE_URL || "test" });
+const client = new SeedLiteralClient({
+    environment: process.env.TESTS_BASE_URL || "test",
+    version: process.env.TESTS_HEADER || "test",
+    auditLogging: process.env.TESTS_HEADER || "test",
+});
 
 describe("Headers", () => {
     test("send", async () => {

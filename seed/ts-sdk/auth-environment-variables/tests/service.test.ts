@@ -6,7 +6,8 @@ import { SeedAuthEnvironmentVariablesClient } from "../src/Client";
 
 const client = new SeedAuthEnvironmentVariablesClient({
     environment: process.env.TESTS_BASE_URL || "test",
-    token: process.env.TESTS_AUTH || "test",
+    apiKey: process.env.FERN_API_KEY || "test",
+    xAnotherHeader: process.env.TESTS_HEADER || "test",
 });
 
 describe("Service", () => {

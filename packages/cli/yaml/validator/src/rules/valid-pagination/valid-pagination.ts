@@ -1,4 +1,11 @@
-import { constructFernFileContext, ResolvedType, TypeResolverImpl } from "@fern-api/ir-generator";
+import {
+    constructFernFileContext,
+    FernFileContext,
+    ResolvedType,
+    TypeResolver,
+    TypeResolverImpl
+} from "@fern-api/ir-generator";
+import { isRawObjectDefinition } from "@fern-api/yaml-schema";
 import chalk from "chalk";
 import { Rule, RuleViolation } from "../../Rule";
 import { CASINGS_GENERATOR } from "../../utils/casingsGenerator";
@@ -15,12 +22,18 @@ export const ValidPagination: Rule = {
         return {
             definitionFile: {
                 httpEndpoint: ({ endpoint }, { relativeFilepath, contents: definitionFile }) => {
-                    const endpointPagination = isBooleanPaginationSchema(endpoint.pagination)
-                        ? defaultPagination
-                        : endpoint.pagination;
+                    const endpointPagination =
+                        typeof endpoint.pagination === "boolean" ? defaultPagination : endpoint.pagination;
                     if (!endpointPagination) {
                         return [];
                     }
+
+                    const file = constructFernFileContext({
+                        relativeFilepath,
+                        definitionFile,
+                        casingsGenerator: CASINGS_GENERATOR,
+                        rootApiFile: workspace.definition.rootApiFile.contents
+                    });
 
                     const violations: RuleViolation[] = [];
 
@@ -34,14 +47,17 @@ export const ValidPagination: Rule = {
                         });
                     }
 
-                    const nextPropertyComponents = getResponsePropertyComponents(endpointPagination.next);
-                    if (nextPropertyComponents == null) {
-                        violations.push({
-                            severity: "error",
-                            message: `Pagination configuration for endpoint ${chalk.bold(
-                                endpoint.path
-                            )} must define a dot-delimited 'next' property starting with $response (e.g $response.next).`
-                        });
+                    let nextPropertyComponents: string[] | undefined;
+                    if (endpointPagination.type === "cursor") {
+                        nextPropertyComponents = getResponsePropertyComponents(endpointPagination?.next);
+                        if (nextPropertyComponents == null) {
+                            violations.push({
+                                severity: "error",
+                                message: `Pagination configuration for endpoint ${chalk.bold(
+                                    endpoint.path
+                                )} must define a dot-delimited 'next' property starting with $response (e.g $response.next).`
+                            });
+                        }
                     }
 
                     const resultsPropertyComponents = getResponsePropertyComponents(endpointPagination.results);
@@ -87,14 +103,13 @@ export const ValidPagination: Rule = {
                     }
                     const resolvedResponseType = typeResolver.resolveType({
                         type: responseType,
-                        file: constructFernFileContext({
-                            relativeFilepath,
-                            definitionFile,
-                            casingsGenerator: CASINGS_GENERATOR,
-                            rootApiFile: workspace.definition.rootApiFile.contents
-                        })
+                        file
                     });
-                    if (!resolvedTypeHasProperty(resolvedResponseType, nextPropertyComponents)) {
+
+                    if (
+                        endpointPagination.type === "cursor" &&
+                        !resolvedTypeHasProperty(file, resolvedResponseType, nextPropertyComponents)
+                    ) {
                         violations.push({
                             severity: "error",
                             message: `Pagination configuration for endpoint ${chalk.bold(
@@ -104,7 +119,8 @@ export const ValidPagination: Rule = {
                             }, which is not specified as a response property.`
                         });
                     }
-                    if (!resolvedTypeHasProperty(resolvedResponseType, resultsPropertyComponents)) {
+
+                    if (!resolvedTypeHasProperty(file, resolvedResponseType, resultsPropertyComponents)) {
                         violations.push({
                             severity: "error",
                             message: `Pagination configuration for endpoint ${chalk.bold(
@@ -123,14 +139,11 @@ export const ValidPagination: Rule = {
                             typeof queryParameter !== "string" ? queryParameter.type : queryParameter;
                         const resolvedQueryParameterType = typeResolver.resolveType({
                             type: queryParameterType,
-                            file: constructFernFileContext({
-                                relativeFilepath,
-                                definitionFile,
-                                casingsGenerator: CASINGS_GENERATOR,
-                                rootApiFile: workspace.definition.rootApiFile.contents
-                            })
+                            file
                         });
-                        if (!resolvedTypeHasProperty(resolvedQueryParameterType, pagePropertyComponents.slice(1))) {
+                        if (
+                            !resolvedTypeHasProperty(file, resolvedQueryParameterType, pagePropertyComponents.slice(1))
+                        ) {
                             violations.push({
                                 severity: "error",
                                 message: `Pagination configuration for endpoint ${chalk.bold(
@@ -150,16 +163,44 @@ export const ValidPagination: Rule = {
     }
 };
 
-function resolvedTypeHasProperty(resolvedType: ResolvedType | undefined, propertyComponents: string[]): boolean {
+function resolvedTypeHasProperty(
+    typeResolver: TypeResolver,
+    file: FernFileContext,
+    resolvedType: ResolvedType | undefined,
+    propertyComponents: string[]
+): boolean {
     if (resolvedType == null) {
         return false;
     }
     if (propertyComponents.length === 0) {
         return true;
     }
-    // TODO: Recurse into the ResolvedType's properties (i.e. for properties like $request.object.page).
-    // We should only support named or optional named types here.
-    return false;
+    const propertyComponent = propertyComponents[0] ?? "";
+    if (resolvedType._type !== "named" || !isRawObjectDefinition(resolvedType.declaration)) {
+        return false;
+    }
+    const property = resolvedType.declaration.properties?.[propertyComponent];
+    if (property == null) {
+        return false;
+    }
+    const resolvedTypeProperty = typeResolver.resolveType({
+        type: typeof property === "string" ? property : property.type,
+        file
+    });
+    return resolvedTypeHasProperty(typeResolver, file, resolvedTypeProperty, propertyComponents.slice(1));
+}
+
+function maybeNamedType(resolvedType: ResolvedType | undefined): ResolvedType | undefined {
+    if (resolvedType == null) {
+        return undefined;
+    }
+    if (resolvedType._type === "named") {
+        return resolvedType;
+    }
+    if (resolvedType._type === "container" && resolvedType.container._type === "optional") {
+        return maybeNamedType(resolvedType.container.itemType);
+    }
+    return undefined;
 }
 
 function getRequestPropertyComponents(value: string): string[] | undefined {
@@ -177,10 +218,4 @@ function trimPrefix(value: string, prefix: string): string | null {
         return value.substring(prefix.length);
     }
     return null;
-}
-
-type PaginationSchema = boolean | { page: string; next: string; results: string } | undefined;
-
-function isBooleanPaginationSchema(value: PaginationSchema): value is boolean {
-    return typeof value === "boolean";
 }

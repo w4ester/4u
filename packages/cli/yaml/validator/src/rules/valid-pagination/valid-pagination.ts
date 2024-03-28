@@ -108,7 +108,7 @@ export const ValidPagination: Rule = {
 
                     if (
                         endpointPagination.type === "cursor" &&
-                        !resolvedTypeHasProperty(file, resolvedResponseType, nextPropertyComponents)
+                        !resolvedTypeHasProperty(typeResolver, file, resolvedResponseType, nextPropertyComponents)
                     ) {
                         violations.push({
                             severity: "error",
@@ -120,7 +120,7 @@ export const ValidPagination: Rule = {
                         });
                     }
 
-                    if (!resolvedTypeHasProperty(file, resolvedResponseType, resultsPropertyComponents)) {
+                    if (!resolvedTypeHasProperty(typeResolver, file, resolvedResponseType, resultsPropertyComponents)) {
                         violations.push({
                             severity: "error",
                             message: `Pagination configuration for endpoint ${chalk.bold(
@@ -142,7 +142,12 @@ export const ValidPagination: Rule = {
                             file
                         });
                         if (
-                            !resolvedTypeHasProperty(file, resolvedQueryParameterType, pagePropertyComponents.slice(1))
+                            !resolvedTypeHasProperty(
+                                typeResolver,
+                                file,
+                                resolvedQueryParameterType,
+                                pagePropertyComponents.slice(1)
+                            )
                         ) {
                             violations.push({
                                 severity: "error",
@@ -188,19 +193,6 @@ function resolvedTypeHasProperty(
         file
     });
     return resolvedTypeHasProperty(typeResolver, file, resolvedTypeProperty, propertyComponents.slice(1));
-}
-
-function maybeNamedType(resolvedType: ResolvedType | undefined): ResolvedType | undefined {
-    if (resolvedType == null) {
-        return undefined;
-    }
-    if (resolvedType._type === "named") {
-        return resolvedType;
-    }
-    if (resolvedType._type === "container" && resolvedType.container._type === "optional") {
-        return maybeNamedType(resolvedType.container.itemType);
-    }
-    return undefined;
 }
 
 function getRequestPropertyComponents(value: string): string[] | undefined {

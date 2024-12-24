@@ -5,6 +5,7 @@ from fern.generator_exec.resources import logging
 from fern.generator_exec.resources.config import GeneratorConfig, GeneratorPublishConfig
 
 from fern_python.generator_exec_wrapper import GeneratorExecWrapper
+from security import safe_command
 
 
 class Publisher:
@@ -79,8 +80,7 @@ class Publisher:
                     logging.LogUpdate(level=logging.LogLevel.DEBUG, message=safe_command)
                 )
             )
-            completed_command = subprocess.run(
-                command,
+            completed_command = safe_command.run(subprocess.run, command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=self._generator_config.output.path,

@@ -7,9 +7,9 @@ import time
 import typing
 from contextlib import asynccontextmanager, contextmanager
 from functools import wraps
-from random import random
 
 import httpx
+import secrets
 
 INITIAL_RETRY_DELAY_SECONDS = 0.5
 MAX_RETRY_DELAY_SECONDS = 10
@@ -73,7 +73,7 @@ def _retry_timeout(response: httpx.Response, retries: int) -> float:
     retry_delay = min(INITIAL_RETRY_DELAY_SECONDS * pow(2.0, retries), MAX_RETRY_DELAY_SECONDS)
 
     # Add a randomness / jitter to the retry delay to avoid overwhelming the server with retries.
-    timeout = retry_delay * (1 - 0.25 * random())
+    timeout = retry_delay * (1 - 0.25 * secrets.SystemRandom().random())
     return timeout if timeout >= 0 else 0
 
 
